@@ -70,14 +70,23 @@ const instruments = [
 ];
 const dialog = document.getElementById("screening");
 const video = dialog.querySelector("video");
-const watch = document.getElementById("watch");
-watch.addEventListener("click", (event) => {
-  if (!dialog.showModal || event.metaKey || event.ctrlKey || event.shiftKey)
-    return;
-  event.preventDefault();
-  dialog.showModal();
-  video.play().catch(() => {});
-});
+let reelTrigger;
+for (const link of document.querySelectorAll("[data-watch]")) {
+  link.addEventListener("click", (event) => {
+    if (
+      !dialog.showModal ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
+    event.preventDefault();
+    reelTrigger = link;
+    dialog.showModal();
+    video.play().catch(() => {});
+  });
+}
 dialog.querySelector("button").addEventListener("click", () => dialog.close());
 dialog.addEventListener("click", (e) => {
   if (e.target === dialog) {
@@ -93,9 +102,10 @@ dialog.addEventListener("click", (e) => {
 });
 dialog.addEventListener("close", () => {
   video.pause();
-  watch.focus({ preventScroll: true });
+  reelTrigger?.focus({ preventScroll: true });
 });
 
+const artworkRevision = "?v=0610692";
 const realmNames = ["Aurelia", "The Gloam"];
 const notes = [
   [
@@ -197,7 +207,7 @@ function renderMap() {
   document.getElementById("land-title").textContent =
     regionNames[realm][region];
   document.getElementById("land-note").textContent = notes[realm][region];
-  landArt.src = "./assets/journal/land-" + realm + "-" + region + ".webp";
+  landArt.src = `./assets/journal/land-${realm}-${region}.webp${artworkRevision}`;
   landArt.alt =
     regionNames[realm][region] +
     " as seen during play in " +
@@ -216,7 +226,7 @@ const itemArt = document.getElementById("item-art");
 function selectItem(index) {
   for (const [i, button] of [...slots.children].entries())
     button.setAttribute("aria-pressed", String(i === index));
-  itemArt.src = "./assets/journal/item-" + index + ".png";
+  itemArt.src = `./assets/journal/item-${index}.png${artworkRevision}`;
   document.getElementById("item-title").textContent = instruments[index].name;
   document.getElementById("item-note").textContent = instruments[index].note;
 }
@@ -228,7 +238,7 @@ for (const [i, item] of instruments.entries()) {
   const img = new Image(200, 160);
   img.loading = "lazy";
   img.alt = "";
-  img.src = "./assets/journal/item-" + i + ".png";
+  img.src = `./assets/journal/item-${i}.png${artworkRevision}`;
   button.append(img);
   button.addEventListener("click", () => selectItem(i));
   slots.append(button);

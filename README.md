@@ -24,12 +24,12 @@ Run `node verification/check.mjs` with Node 22+ and Chrome installed to play thr
 
 GitHub Pages publishes the repository root from `main`. The marketing site lives in [index.html](index.html), and its Play links open the standalone game in [play/](play/).
 
-The homepage opens as a bell-tower title screen. Its Play command starts a new journey or resumes a valid local save. The journal pairs all twelve regions of Aurelia with their Gloam counterparts and shows every instrument from the game renderer.
+The homepage opens on the game's moonlit bell scene. Its Play command starts a new journey or resumes a valid local save. The gameplay gallery shows Bellwick and Hushwick from the same viewpoint and features two dungeon chambers. The journal pairs all twelve regions of Aurelia with their Gloam counterparts and shows every instrument from the game renderer.
 
 <details>
-<summary>Title-screen artwork</summary>
+<summary>Earlier promotional artwork</summary>
 
-The [bell tower](assets/journal/bell-tower.webp) and its [mobile crop](assets/journal/bell-tower-mobile.webp) were made with built-in ImageGen. The journal’s portraits, landmarks, items, and location captures use the game renderer.
+The original promotional [bell tower](assets/journal/bell-tower.webp) and its [mobile crop](assets/journal/bell-tower-mobile.webp) were made with built-in ImageGen. The current homepage artwork, gameplay screenshots, and journal illustrations use the game renderer.
 
 **Generation prompt**
 

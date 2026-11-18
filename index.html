@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="theme-color" content="#101222" />
+    <meta name="theme-color" content="#111729" />
     <title>Veilbound — Echoes of the Hollow Crown</title>
     <meta
       name="description"
@@ -21,7 +21,13 @@
     />
     <meta
       property="og:image"
-      content="https://nearbycoder.github.io/veilbound/assets/journal/bell-tower.webp"
+      content="https://nearbycoder.github.io/veilbound/assets/media/bellwick-share.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="675" />
+    <meta
+      property="og:image:alt"
+      content="Gameplay in Bellwick Village, showing Rowan beside the stone square and bell arch."
     />
     <meta
       property="og:url"
@@ -29,15 +35,15 @@
     />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./assets/site.css?v=bell-tower" />
+    <link rel="stylesheet" href="./assets/site.css?v=painted-worlds" />
     <link
       rel="preload"
-      href="./assets/type/Jacquard24-Regular.ttf"
+      href="./assets/type/cormorant-garamond-medium.ttf"
       as="font"
       type="font/ttf"
       crossorigin
     />
-    <script src="./assets/site.js?v=bell-tower" defer></script>
+    <script src="./assets/site.js?v=painted-worlds" defer></script>
   </head>
   <body id="top">
     <a class="skip" href="#main">Skip to game menu</a>
@@ -46,9 +52,9 @@
         <a href="#top" class="brand" aria-label="Veilbound home"
           ><img src="./assets/icon.svg" alt="" />Veilbound</a
         >
-        <nav aria-label="Field journal">
-          <a href="#atlas">World atlas</a><a href="#satchel">Satchel</a
-          ><a href="#controls">Controls</a>
+        <nav aria-label="Site navigation">
+          <a href="#gameplay">Gameplay</a><a href="#atlas">World atlas</a
+          ><a href="#satchel">Satchel</a><a href="#controls">Controls</a>
         </nav>
         <button id="ring" type="button" hidden>
           <span aria-hidden="true">♫</span>
@@ -61,12 +67,14 @@
         <picture
           ><source
             media="(max-width:650px)"
-            srcset="./assets/journal/bell-tower-mobile.webp" />
+            srcset="./assets/media/moonlit-bell-mobile.webp" />
           <img
             class="backdrop"
-            src="./assets/journal/bell-tower.webp"
+            src="./assets/media/moonlit-bell.webp"
+            width="1600"
+            height="900"
             fetchpriority="high"
-            alt="Rowan holds Ione’s lantern beside a ruined bell tower above the lights of the valley."
+            alt="Rowan stands by the west bell under a full moon, overlooking the lights of Bellwick Village."
         /></picture>
         <div class="resonance" aria-hidden="true"></div>
         <div class="motes" aria-hidden="true">
@@ -84,7 +92,10 @@
               ><span class="pointer" aria-hidden="true">▶</span> Play game
               <small>↵</small></a
             >
-            <a id="watch" href="./assets/media/gameplay.mp4"
+            <a
+              id="watch"
+              data-watch
+              href="./assets/media/gameplay.mp4?v=0610692"
               ><span class="pointer" aria-hidden="true">▶</span> Watch
               gameplay</a
             >
@@ -97,7 +108,12 @@
       </section>
       <div class="dialogue">
         <div class="dialogue-inner">
-          <img src="./assets/journal/merin.png" alt="" width="68" height="82" />
+          <img
+            src="./assets/journal/merin.png?v=0610692"
+            alt=""
+            width="68"
+            height="82"
+          />
           <div>
             <p class="speaker">Merin <span>Bellwarden</span></p>
             <p id="speech" aria-live="polite">
@@ -114,6 +130,68 @@
           </button>
         </div>
       </div>
+      <section class="gameplay" id="gameplay" aria-labelledby="gameplay-title">
+        <header class="gameplay-heading">
+          <h2 id="gameplay-title">Scenes from Veilbound</h2>
+          <a
+            class="reel-link"
+            data-watch
+            href="./assets/media/gameplay.mp4?v=0610692"
+          >
+            <span aria-hidden="true">▶</span> Watch gameplay
+          </a>
+        </header>
+        <div class="capture-grid">
+          <figure class="capture">
+            <img
+              src="./assets/media/bellwick.webp"
+              alt="Rowan in the cobbled square beside Bellwick’s bell arch, teal-roofed cottages, and orchards."
+              width="1200"
+              height="675"
+              loading="lazy"
+            />
+            <figcaption>
+              <span>Bellwick Village</span><small>Aurelia</small>
+            </figcaption>
+          </figure>
+          <figure class="capture">
+            <img
+              src="./assets/media/hushwick.webp"
+              alt="The same square in Hushwick, with violet stone, twisted trees, and teal-lit windows."
+              width="1200"
+              height="675"
+              loading="lazy"
+            />
+            <figcaption>
+              <span>Hushwick</span><small>The Gloam</small>
+            </figcaption>
+          </figure>
+          <figure class="capture">
+            <img
+              src="./assets/media/drowned-choir.webp"
+              alt="Rowan faces the exposed Abyssal Chorister among rippling floor emblems and blue torchlight."
+              width="1200"
+              height="675"
+              loading="lazy"
+            />
+            <figcaption>
+              <span>Drowned Choir</span><small>Heart chamber</small>
+            </figcaption>
+          </figure>
+          <figure class="capture">
+            <img
+              src="./assets/media/frostbound.webp"
+              alt="The Pale Archivist stands in a chamber of ice, with a snowflake engraved in the floor."
+              width="1200"
+              height="675"
+              loading="lazy"
+            />
+            <figcaption>
+              <span>Frostbound Reliquary</span><small>Heart chamber</small>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
       <section class="journal" aria-labelledby="journal-title">
         <header class="journal-head">
           <h2 id="journal-title">Rowan’s field journal</h2>
@@ -153,7 +231,7 @@
                 <img
                   id="land-art"
                   loading="lazy"
-                  src="./assets/journal/land-0-5.webp"
+                  src="./assets/journal/land-0-5.webp?v=0610692"
                   width="620"
                   height="294"
                   alt="Bellwick Village in Aurelia."
@@ -196,7 +274,7 @@
             <div class="item-detail" aria-live="polite">
               <img
                 id="item-art"
-                src="./assets/journal/item-10.png"
+                src="./assets/journal/item-10.png?v=0610692"
                 width="200"
                 height="160"
                 alt=""
@@ -291,10 +369,10 @@
         controls
         playsinline
         preload="none"
-        poster="./assets/media/aurelia.jpg"
+        poster="./assets/media/bellwick.webp"
         aria-label="Silent gameplay footage showing exploration and dungeon combat"
       >
-        <source src="./assets/media/gameplay.mp4" type="video/mp4" />
+        <source src="./assets/media/gameplay.mp4?v=0610692" type="video/mp4" />
       </video>
       <p>
         Bellwick Village · Glassmere Marsh · Drowned Choir · Ashen Hourworks

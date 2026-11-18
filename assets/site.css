@@ -1,9 +1,4 @@
 @font-face {
-  font-family: Jacquard;
-  src: url(type/Jacquard24-Regular.ttf) format("truetype");
-  font-display: swap;
-}
-@font-face {
   font-family: Silk;
   src: url(type/Silkscreen-Regular.ttf) format("truetype");
   font-display: swap;
@@ -15,11 +10,12 @@
 }
 :root {
   color-scheme: dark;
-  --night: #111424;
-  --deep: #151928;
-  --gold: #e9c780;
-  --ivory: #fff2cc;
-  --bronze: #82704b;
+  --night: #111729;
+  --deep: #171e33;
+  --gold: #edcd91;
+  --ivory: #fff2ce;
+  --bronze: #a08055;
+  --enamel: linear-gradient(#30354d, #1b243b 28%, #161d32);
   --paper: #eadfc5;
   --ink: #393529;
   --pixel: Silk, monospace;
@@ -75,9 +71,9 @@ video:focus-visible {
   top: 8px;
 }
 .hud {
-  background: #111423;
-  border-bottom: 1px solid #8f7957;
-  box-shadow: 0 3px #0b0e18;
+  background: var(--enamel);
+  border-bottom: 1px solid #b39260;
+  box-shadow: 0 3px #111729;
   position: relative;
   z-index: 2;
 }
@@ -96,10 +92,7 @@ footer {
   display: flex;
   align-items: center;
   gap: 8px;
-  font:
-    34px/0.9 Jacquard,
-    Georgia,
-    serif;
+  font: 500 36px/0.9 var(--serif);
   color: var(--ivory);
 }
 .brand img {
@@ -121,6 +114,8 @@ footer {
 .map-key,
 .veil-switch,
 .ink-link,
+.reel-link,
+.capture small,
 footer > a:not(.brand),
 #screening p,
 .item-tag {
@@ -135,8 +130,9 @@ footer a:hover {
   color: var(--gold);
 }
 .hud button {
-  border: 1px solid #7f7056;
-  box-shadow: inset 0 0 0 2px #222630;
+  border: 1px solid #927953;
+  box-shadow: inset 0 0 0 2px #151b2f;
+  background: #212a40;
   padding: 8px 12px;
   color: var(--gold);
 }
@@ -148,8 +144,8 @@ footer a:hover {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: #16334d;
-  min-height: clamp(540px, 71svh, 790px);
+  background: #161e34;
+  min-height: clamp(520px, 70svh, 840px);
   display: grid;
   align-items: center;
 }
@@ -166,8 +162,7 @@ footer a:hover {
 }
 .backdrop {
   object-fit: cover;
-  object-position: 55% 54%;
-  image-rendering: pixelated;
+  object-position: 92% 24%;
 }
 .title-screen picture {
   z-index: -4;
@@ -176,8 +171,8 @@ footer a:hover {
   content: "";
   z-index: -2;
   background:
-    linear-gradient(90deg, #0a1228af, #0b172b54 36%, transparent 65%),
-    linear-gradient(0deg, #1014238a, transparent 17%);
+    linear-gradient(90deg, #060c1b70, #0b14293d 35%, transparent 64%),
+    linear-gradient(0deg, #1117298f, transparent 18%);
 }
 .screen-edge {
   inset: 14px;
@@ -215,26 +210,20 @@ footer a:hover {
 .title-lockup {
   width: max-content;
   max-width: 100%;
-  text-align: center;
 }
 .title-lockup h1 {
-  font:
-    400 clamp(94px, 10.2vw, 157px) / 0.86 Jacquard,
-    Georgia,
-    serif;
+  font: 500 clamp(100px, 10.8vw, 160px) / 0.82 var(--serif);
   letter-spacing: -0.045em;
-  color: #ffe9b6;
-  margin: 9px 0 13px;
+  color: #f6dfa9;
+  margin: 13px 0 17px;
   text-shadow:
-    0 2px #b29663,
-    0 4px #885c32,
-    2px 6px #182030,
-    0 9px 24px #071121;
+    0 2px #a77e52,
+    2px 4px #141c34,
+    0 9px 28px #070d21;
 }
 .crown {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 14px;
   height: 24px;
 }
@@ -242,6 +231,9 @@ footer a:hover {
   width: 50px;
   height: 1px;
   background: linear-gradient(90deg, transparent, #ddbd7d);
+}
+.crown i:first-child {
+  display: none;
 }
 .crown i:last-child {
   transform: rotate(180deg);
@@ -283,10 +275,10 @@ footer a:hover {
   margin-top: 36px;
   width: min(328px, 100%);
   padding: 7px;
-  background: linear-gradient(90deg, #141a2cf5, #1a2534df);
+  background: linear-gradient(112deg, #323b53f2, #1b233bee 64%, #171e32ef);
   border: 1px solid #99805a;
   box-shadow:
-    inset 0 0 0 3px #191a29,
+    inset 0 0 0 3px #141a2b,
     0 0 0 2px #131322,
     4px 5px 0 #070f215c;
 }
@@ -393,7 +385,7 @@ footer a:hover {
 }
 .dialogue {
   border-block: 1px solid #968256;
-  background: #1b2030;
+  background: var(--enamel);
   box-shadow:
     inset 0 3px #121622,
     inset 0 -3px #121622;
@@ -410,7 +402,6 @@ footer a:hover {
 .dialogue img {
   width: 54px;
   height: auto;
-  image-rendering: pixelated;
 }
 .speaker {
   color: var(--gold);
@@ -433,24 +424,78 @@ footer a:hover {
   color: var(--gold);
   font-size: 16px;
 }
+.gameplay,
 .journal {
   max-width: 1250px;
   width: 89%;
-  margin: auto;
-  padding: 56px 0 68px;
+  margin-inline: auto;
+}
+.gameplay {
+  padding: clamp(40px, 5.5vw, 76px) 0 0;
+}
+.gameplay-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  margin-bottom: 22px;
+}
+.gameplay h2,
+.journal h2 {
+  font: 500 clamp(42px, 4.7vw, 66px) / 0.98 var(--serif);
+  margin: 0;
+  letter-spacing: -0.035em;
+}
+.reel-link {
+  padding: 10px 15px;
+  color: var(--gold);
+  border: 1px solid var(--bronze);
+  background: var(--deep);
+}
+.reel-link:hover {
+  background: #262e47;
+  color: var(--ivory);
+}
+.capture-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(14px, 2.5vw, 30px);
+}
+.capture {
+  margin: 0;
+  padding: 5px;
+  border: 1px solid var(--bronze);
+  box-shadow: inset 0 0 0 2px #0b1020;
+  background: var(--enamel);
+}
+.capture img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.capture figcaption {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px 12px;
+  flex-wrap: wrap;
+  padding: 9px 12px 6px;
+  color: var(--ivory);
+  font: 500 clamp(24px, 2.55vw, 34px) / 1.06 var(--serif);
+}
+.capture small {
+  color: var(--gold);
+  font-size: 10px;
+}
+.journal {
+  padding: clamp(56px, 7vw, 96px) 0 68px;
 }
 .journal-head {
   display: flex;
   align-items: center;
   gap: 25px;
   margin-bottom: 22px;
-}
-.journal h2 {
-  font:
-    400 clamp(40px, 4.7vw, 67px) / 1 Jacquard,
-    Georgia,
-    serif;
-  margin: 0;
 }
 .rule {
   flex: 1;
@@ -538,12 +583,12 @@ footer a:hover {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   aspect-ratio: 5/3;
-  background: #ccc09a url(journal/atlas-0.webp) center/100% 100%;
+  background: #ccc09a url(journal/atlas-0.webp?v=0610692) center/100% 100%;
   outline: 1px solid #9c8c66;
   border: 3px solid #d9caab;
 }
 .map-grid.dark {
-  background-image: url(journal/atlas-1.webp);
+  background-image: url(journal/atlas-1.webp?v=0610692);
 }
 .map-grid button {
   position: relative;
@@ -619,17 +664,17 @@ footer a:hover {
 }
 .item-grid button {
   aspect-ratio: 1.3;
-  background: #2b3036;
+  background: var(--enamel);
   border: 3px double #948260;
   padding: 2px;
 }
 .item-grid button[aria-pressed="true"] {
-  background: #485043;
+  background: #36415e;
   border-color: #f7cf78;
   outline: 2px solid #685735;
 }
 .item-grid button:hover {
-  background: #414740;
+  background: #3b4563;
 }
 .item-grid img,
 .item-detail img {
@@ -705,7 +750,7 @@ footer a:not(.brand) {
   padding: 8px 15px;
 }
 .film-top h2 {
-  font: 400 34px Jacquard;
+  font: 500 38px var(--serif);
   margin: 0;
 }
 .film-top button {
@@ -746,34 +791,40 @@ footer a:not(.brand) {
     width: 85%;
   }
 }
-@media (max-width: 650px) {
-  .hud-inner {
-    width: 91%;
-    min-height: 52px;
-  }
+@media (max-width: 740px) {
   .hud nav {
     display: none;
   }
   .hud button {
     margin-left: auto;
+  }
+}
+@media (max-width: 650px) {
+  .hud-inner {
+    width: 91%;
+    min-height: 52px;
+  }
+  .hud button {
     padding: 5px 8px;
   }
   .title-screen {
-    min-height: 575px;
-    min-height: clamp(525px, 72svh, 680px);
+    min-height: clamp(552px, 73svh, 675px);
     align-items: end;
+  }
+  .title-screen picture {
+    height: 74%;
   }
   .title-screen:before {
     background: linear-gradient(
       0deg,
-      #0c1023f4 2%,
-      #10172ccf 29%,
-      #101d3536 58%,
-      transparent 74%
+      #111729 25%,
+      #111729ad 38%,
+      #10192f35 51%,
+      transparent 66%
     );
   }
   .backdrop {
-    object-position: center 23%;
+    object-position: center 46%;
   }
   .title-content {
     width: 88%;
@@ -781,13 +832,18 @@ footer a:not(.brand) {
   }
   .title-lockup {
     margin-inline: auto;
+    text-align: center;
   }
   .title-lockup h1 {
-    font-size: clamp(83px, 20.7vw, 125px);
-    margin: 6px 0 8px;
+    font-size: clamp(70px, 21.5vw, 116px);
+    margin: 8px 0 11px;
   }
   .crown {
+    justify-content: center;
     height: 16px;
+  }
+  .crown i:first-child {
+    display: block;
   }
   .crown b {
     height: 17px;
@@ -832,8 +888,17 @@ footer a:not(.brand) {
     font-size: 12px;
     padding: 14px 5px;
   }
+  .capture-grid {
+    grid-template-columns: 1fr;
+  }
+  .gameplay h2 {
+    font-size: 40px;
+  }
+  .gameplay,
   .journal {
     width: 91%;
+  }
+  .journal {
     padding: 35px 0 45px;
   }
   .journal-head {
@@ -936,7 +1001,7 @@ footer a:not(.brand) {
 .resonance {
   position: absolute;
   left: 84%;
-  top: 39%;
+  top: 70%;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -964,10 +1029,16 @@ footer a:not(.brand) {
     transform: scale(3.3);
   }
 }
+@media (max-width: 850px) {
+  .resonance {
+    left: 80%;
+    top: 61%;
+  }
+}
 @media (max-width: 650px) {
   .resonance {
-    left: 68%;
-    top: 38%;
+    left: 69%;
+    top: 47%;
   }
   .journal-intro {
     font-size: 19px;
