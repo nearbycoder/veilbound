@@ -477,3 +477,37 @@ footer {
     animation: none;
   }
 }
+
+/* The site uses the same walnut, brass, and vellum as Rowan's equipment. */
+.nav-play,
+.reel-link,
+#ring,
+.game-menu a:not(.launch),
+.veil-controls button[aria-pressed="true"] {
+  color: #f8dfb1;
+  border-color: #b38950;
+  background:
+    linear-gradient(#1c0e1137, #140b105c),
+    #35221a url("../play/art/kit-wood.webp") center / 205px 112px;
+  box-shadow: inset 0 0 0 2px #1e100c70;
+}
+.nav-play:hover,
+.reel-link:hover,
+#ring:hover,
+.game-menu a:not(.launch):hover {
+  color: #fff0cf;
+  background:
+    linear-gradient(#b9794c58, #32101850),
+    #3c281c url("../play/art/kit-wood.webp") center / 205px 112px;
+}
+.game-menu a.launch,
+.final-invite .call-to-play {
+  background:
+    linear-gradient(#f8e0a7c2, #cb9c639a),
+    #d9a569 url("../play/art/kit-brass.webp") center / 145px 145px;
+}
+.journal .paper {
+  background:
+    linear-gradient(#fff0cc59, #d8b48132),
+    #ebd6af url("../play/art/kit-parchment.webp") center / 260px 260px;
+}

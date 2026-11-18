@@ -417,9 +417,53 @@ try {
   await call("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   await delay(70);
   if (await ev("held.size")) throw Error("Native touch release failed");
+  await call("Emulation.setDeviceMetricsOverride", {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 1,
+    mobile: true,
+  });
+  await ev('openMenu("pause");paint()');
+  const touchMenuButton = await ev(`(() => {
+    const actions = document.getElementById("touch-actions");
+    const button = [...actions.querySelectorAll("button")].find(
+      (item) => item.textContent === "Equipment",
+    );
+    if (actions.hidden || getComputedStyle(actions).display === "none" || !button || !document.getElementById("touch").hidden)
+      throw Error("Portrait menu did not replace the game controls");
+    const b = button.getBoundingClientRect();
+    if (b.height < 44 || b.right > innerWidth || b.bottom > innerHeight)
+      throw Error("Portrait menu target is too small or off screen");
+    return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+  })()`);
+  await call("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [touchMenuButton],
+  });
+  await call("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await delay(100);
+  if (
+    !(await ev(
+      'mode === "menu" && menu === "inventory" && !document.getElementById("touch-actions").hidden',
+    ))
+  )
+    throw Error("Portrait touch menu did not open equipment");
+  const mobileMenu = await call("Page.captureScreenshot", { format: "png" });
+  fs.writeFileSync(
+    path.join(output, "mobile-menu.png"),
+    Buffer.from(mobileMenu.result.data, "base64"),
+  );
+  await key("Escape", "Escape");
+  if (
+    !(await ev(
+      'mode === "play" && document.getElementById("touch-actions").hidden && !document.getElementById("touch").hidden',
+    ))
+  )
+    throw Error("Portrait controls did not return to play");
   checks.push(
     "real-time animation loop and browser keyboard input",
     "native Chrome multitouch holds and releases movement and shield",
+    "portrait touch opens equipment through a full-size action and restores the play controls",
   );
   if (errors.length) throw Error(errors.join("\n"));
   const record = await ev(
@@ -1405,26 +1449,28 @@ function screenGallery() {
     noticeTime,
   };
   const position = [p.x, p.y];
-  const create = (cols, rows) => {
+  const create = (cols, rows, width = 240) => {
     const sheet = document.createElement("canvas");
-    sheet.width = cols * 240;
-    sheet.height = rows * 153;
+    sheet.width = cols * width;
+    sheet.height = rows * (Math.round((width * 9) / 16) + 18);
     return sheet;
   };
   const draw = (sheet, cols, index, label) => {
     paint();
     const ctx = sheet.getContext("2d");
-    const x = (index % cols) * 240,
-      y = Math.floor(index / cols) * 153;
-    ctx.drawImage(cv, x, y, 240, 135);
+    const width = sheet.width / cols;
+    const height = Math.round((width * 9) / 16);
+    const x = (index % cols) * width;
+    const y = Math.floor(index / cols) * (height + 18);
+    ctx.drawImage(cv, x, y, width, height);
     ctx.fillStyle = "#171b32";
-    ctx.fillRect(x, y + 135, 240, 18);
+    ctx.fillRect(x, y + height, width, 18);
     ctx.fillStyle = "#f8dfb7";
     ctx.font = "12px Georgia";
-    ctx.fillText(label, x + 7, y + 148, 226);
+    ctx.fillText(label, x + 7, y + height + 13, width - 14);
   };
   const roomsSheet = create(12, 12);
-  const menuSheet = create(4, 3);
+  const menuSheet = create(4, 3, 360);
   const encode = (sheet) => sheet.toDataURL("image/webp", 0.88).split(",")[1];
   try {
     S = blank();

@@ -16,11 +16,11 @@ For offline play, open [play/index.html](play/index.html) in a browser and choos
 | Use equipped instruments | Q and E |
 | Equipment / map / pause | Tab / M / Escape |
 
-Pause to open the quest journal, adjust controls, or export a save. Bell towers restore supplies and link discovered destinations.
+Pause to open the quest journal, adjust controls, or export a save. The map and journal open in Rowan’s vellum field book, and equipped tools sit in a stitched leather roll. Bell towers restore supplies and link discovered destinations. On a portrait phone, full-size menu actions sit beneath the game view.
 
 The game renders in Canvas 2D. Painted textures follow the actual roads and dungeon layouts. Each of the 24 overworld areas has its own palette and landmark art, and each dungeon combines its materials and guardian with lighting and decoration keyed to the room’s purpose. Rowan, the village cast, guardians, and instruments use painted sprites. The [art pack](play/art/README.md) documents the atlases and generation prompts.
 
-The [overworld gallery](verification/environment-gallery.png) pairs each region of Aurelia with its Gloam counterpart. The [room gallery](verification/room-gallery.webp) shows all 120 dungeon rooms and 24 cave variants. The [menu gallery](verification/menu-gallery.webp) and [settings capture](verification/settings.png) show the redesigned interface.
+The [overworld gallery](verification/environment-gallery.png) pairs each region of Aurelia with its Gloam counterpart. The [room gallery](verification/room-gallery.webp) shows all 120 dungeon rooms and 24 cave variants. The [menu gallery](verification/menu-gallery.webp), [settings capture](verification/settings.png), and [portrait menu capture](verification/mobile-menu.png) show the interface in play.
 
 Run `node verification/check.mjs` with Node 22+ and Chrome installed to play through the campaign headlessly, run the interaction, artwork, and audio checks, and regenerate the captures and [verification results](verification/results.json). Set `CHROME_PATH` to select a different Chrome executable.
 

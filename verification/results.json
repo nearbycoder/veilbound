@@ -88,7 +88,8 @@
     "Master gain, zero volume and mute change the signal while an effect is playing",
     "Rendered 120 dungeon rooms, 24 side-cave variants and every canvas menu for visual review",
     "real-time animation loop and browser keyboard input",
-    "native Chrome multitouch holds and releases movement and shield"
+    "native Chrome multitouch holds and releases movement and shield",
+    "portrait touch opens equipment through a full-size action and restores the play controls"
   ],
   "runtimeErrors": []
 }

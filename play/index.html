@@ -8,481 +8,7 @@
     />
     <meta name="theme-color" content="#10191c" />
     <title>Veilbound · Echoes of the Hollow Crown</title>
-    <style>
-      * {
-        box-sizing: border-box;
-      }
-      html,
-      body {
-        margin: 0;
-        width: 100%;
-        height: 100%;
-        background: #0a1316;
-        color: #f1e4c2;
-        overflow: hidden;
-      }
-      body {
-        display: grid;
-        place-items: center;
-      }
-      main {
-        position: relative;
-        width: min(100vw, 177.7778dvh);
-        aspect-ratio: 16/9;
-        box-shadow: 0 0 70px #0009;
-      }
-      #game {
-        width: 100%;
-        height: 100%;
-        display: block;
-        image-rendering: auto;
-        touch-action: none;
-        outline: none;
-      }
-      #hud-settings {
-        position: absolute;
-        left: 71.3%;
-        top: 0;
-        width: 6.4%;
-        height: 12%;
-        background: transparent;
-        border: 1px solid transparent;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-      #hud-settings:hover {
-        background: #e7cb8f12;
-      }
-      #hud-settings:focus-visible {
-        outline: 2px solid #e7cb8f;
-        outline-offset: -3px;
-      }
-      #touch {
-        display: none;
-        position: fixed;
-        inset: auto 1vw 1vh;
-        pointer-events: none;
-        justify-content: space-between;
-        align-items: end;
-      }
-      #touch section {
-        display: grid;
-        grid-template-columns: repeat(3, min(11vw, 52px));
-        gap: 2px;
-      }
-      #touch button {
-        touch-action: none;
-        pointer-events: auto;
-        height: min(11vw, 48px);
-        color: #fff4cd;
-        background: #162328c9;
-        border: 1px solid #b49c6c;
-        border-radius: 5px;
-        font: bold 16px Georgia;
-      }
-      #touch .gap {
-        visibility: hidden;
-      }
-      @media (pointer: coarse) {
-        body.playing #touch {
-          display: flex;
-        }
-      }
-      @media (pointer: coarse) and (orientation: portrait) {
-        main {
-          align-self: start;
-          margin-top: 10vh;
-        }
-        #touch {
-          bottom: 9vh;
-        }
-      }
-      #preferences {
-        --paper: #f5ecd8;
-        --gold: #e4c590;
-        --mute: #b7c3b7;
-        --rule: #6a79634d;
-        width: min(836px, calc(100vw - 36px));
-        max-width: none;
-        max-height: calc(100dvh - 26px);
-        padding: 0;
-        margin: auto;
-        overflow: auto;
-        color: var(--paper);
-        color-scheme: dark;
-        border: 1px solid #9a8963;
-        border-radius: 6px;
-        background: #172627;
-        box-shadow:
-          0 26px 90px #0009,
-          inset 0 0 0 4px #263331;
-        font:
-          15px/1.4 "Avenir Next",
-          "Segoe UI",
-          system-ui,
-          sans-serif;
-      }
-      #preferences::backdrop {
-        background: #091316bb;
-        backdrop-filter: blur(5px);
-      }
-      #preferences [hidden] {
-        display: none;
-      }
-      #preferences button {
-        font: inherit;
-        color: inherit;
-        cursor: pointer;
-      }
-      #preferences :focus-visible {
-        outline: 2px solid #f7d99e;
-        outline-offset: 3px;
-      }
-      .pref-header {
-        position: relative;
-        padding: 22px 28px 15px;
-        border-bottom: 1px solid var(--rule);
-      }
-      .pref-wordmark,
-      .pref-figure figcaption span {
-        display: block;
-        color: var(--gold);
-        text-transform: uppercase;
-        font-size: 10px;
-        letter-spacing: 0.17em;
-        font-weight: 650;
-      }
-      .pref-header h1 {
-        font:
-          38px/1.12 Georgia,
-          serif;
-        margin: 4px 0 0;
-        letter-spacing: -0.035em;
-      }
-      .pref-close {
-        position: absolute;
-        top: 20px;
-        right: 22px;
-        width: 36px;
-        height: 36px;
-        background: none;
-        border: 1px solid var(--rule);
-        border-radius: 50%;
-        font-size: 24px !important;
-        line-height: 1 !important;
-      }
-      .pref-layout {
-        display: grid;
-        grid-template-columns: 0.82fr 1fr;
-      }
-      .pref-figure {
-        margin: 0;
-        min-height: 322px;
-        position: relative;
-        isolation: isolate;
-        overflow: hidden;
-        border-right: 1px solid var(--rule);
-        background: #1b3437;
-      }
-      .pref-figure canvas {
-        width: 100%;
-        height: 100%;
-        left: 0;
-        top: 0;
-        position: absolute;
-        object-fit: cover;
-      }
-      .pref-figure figcaption {
-        position: absolute;
-        inset: auto 0 0;
-        padding: 34px 22px 19px;
-        background: linear-gradient(transparent, #102422de 75%);
-        text-shadow: 0 1px 3px #0a1919;
-      }
-      .pref-figure figcaption strong {
-        font:
-          23px/1.3 Georgia,
-          serif;
-        display: block;
-        margin-top: 3px;
-      }
-      .pref-controls {
-        padding: 16px 27px 20px;
-      }
-      .pref-tabs {
-        display: flex;
-        gap: 22px;
-        border-bottom: 1px solid var(--rule);
-      }
-      .pref-tabs button {
-        padding: 8px 0 10px;
-        color: var(--mute) !important;
-        background: none;
-        border: 0;
-        border-bottom: 2px solid transparent;
-      }
-      .pref-tabs button[aria-selected="true"] {
-        color: var(--gold) !important;
-        border-color: var(--gold);
-      }
-      .pref-panel {
-        display: grid;
-        gap: 20px;
-        padding-top: 22px;
-      }
-      #audio-panel,
-      #game-panel {
-        gap: 13px;
-      }
-      .pref-panel fieldset {
-        border: none;
-        padding: 0;
-        margin: 0;
-        min-width: 0;
-      }
-      .pref-panel legend {
-        padding: 0;
-        margin: 0 0 9px;
-      }
-      .pref-presets {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        background: #101e20;
-        border: 1px solid #56675f;
-        padding: 3px;
-        border-radius: 5px;
-      }
-      .pref-presets label {
-        position: relative;
-        cursor: pointer;
-      }
-      .pref-presets input {
-        opacity: 0;
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        margin: 0;
-        cursor: pointer;
-      }
-      .pref-presets span {
-        display: block;
-        padding: 7px 2px;
-        border-radius: 3px;
-        text-align: center;
-        color: var(--mute);
-        font-size: 14px;
-      }
-      .pref-presets input:checked + span {
-        background: #d9bf8d;
-        color: #24302a;
-        font-weight: 650;
-      }
-      .pref-presets input:focus-visible + span {
-        outline: 2px solid #fff1c7;
-      }
-      .pref-detail,
-      .pref-toggle small {
-        color: var(--mute);
-        margin: 6px 0 0;
-        font-size: 12px;
-        display: block;
-      }
-      .pref-range {
-        display: grid;
-        gap: 4px;
-      }
-      .pref-range span,
-      .pref-toggle,
-      .pref-action {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-      }
-      .pref-range output {
-        color: var(--gold);
-        font:
-          12px/1.3 ui-monospace,
-          monospace;
-        font-variant-numeric: tabular-nums;
-      }
-      .pref-range input {
-        width: 100%;
-        margin: 0;
-        height: 20px;
-        appearance: none;
-        background: transparent;
-        cursor: pointer;
-        --fill: 50%;
-      }
-      .pref-range input::-webkit-slider-runnable-track {
-        height: 4px;
-        border-radius: 2px;
-        background: linear-gradient(
-          to right,
-          var(--gold) var(--fill),
-          #405451 var(--fill)
-        );
-      }
-      .pref-range input::-webkit-slider-thumb {
-        appearance: none;
-        width: 14px;
-        height: 14px;
-        border: 2px solid #f3dfb3;
-        border-radius: 50%;
-        background: #c6a774;
-        margin-top: -5px;
-      }
-      .pref-range input::-moz-range-track {
-        height: 4px;
-        background: #405451;
-      }
-      .pref-range input::-moz-range-progress {
-        height: 4px;
-        background: var(--gold);
-      }
-      .pref-range input::-moz-range-thumb {
-        background: var(--gold);
-        border-color: #f3dfb3;
-      }
-      .pref-toggle {
-        cursor: pointer;
-        min-height: 32px;
-      }
-      .pref-toggle small {
-        margin-top: 1px;
-      }
-      .pref-toggle input {
-        flex: none;
-        cursor: pointer;
-        appearance: none;
-        width: 35px;
-        height: 20px;
-        margin: 0;
-        border: 1px solid #67766d;
-        border-radius: 12px;
-        background: #2b3b39;
-        display: grid;
-        align-items: center;
-      }
-      .pref-toggle input::after {
-        content: "";
-        width: 12px;
-        height: 12px;
-        margin-left: 3px;
-        background: #b6bdb1;
-        border-radius: 50%;
-      }
-      .pref-toggle input:checked {
-        background: #ad9567;
-        border-color: #d8bb87;
-      }
-      .pref-toggle input:checked::after {
-        background: #fff1d4;
-        transform: translateX(15px);
-      }
-      .pref-action,
-      .pref-footer button {
-        background: #253937;
-        border: 1px solid #62766b;
-        border-radius: 4px;
-        padding: 7px 12px;
-      }
-      .pref-action:hover,
-      .pref-close:hover {
-        background: #364b43;
-      }
-      .pref-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 13px 26px;
-        border-top: 1px solid var(--rule);
-      }
-      .pref-footer span {
-        color: var(--mute);
-        font-size: 12px;
-      }
-      .pref-footer button {
-        min-width: 84px;
-        background: #d9bf8d;
-        border-color: #ecd4a6;
-        color: #24302a !important;
-        font-weight: 650 !important;
-      }
-      @media (max-width: 640px) {
-        #preferences {
-          width: min(440px, calc(100vw - 16px));
-          max-height: calc(100dvh - 12px);
-        }
-        .pref-header {
-          padding: 14px 18px 10px;
-        }
-        .pref-header h1 {
-          font-size: 30px;
-        }
-        .pref-layout {
-          grid-template-columns: 1fr;
-        }
-        .pref-figure {
-          min-height: 0;
-          height: clamp(74px, 18dvh, 140px);
-          border-right: 0;
-        }
-        .pref-figure canvas {
-          object-position: center 60%;
-        }
-        .pref-figure figcaption {
-          padding: 16px;
-        }
-        .pref-figure figcaption strong {
-          font-size: 19px;
-        }
-        .pref-controls {
-          padding: 7px 18px 16px;
-        }
-        .pref-panel {
-          gap: 14px;
-          padding-top: 14px;
-        }
-        .pref-footer {
-          padding: 9px 18px;
-        }
-      }
-      @media (max-height: 540px) and (min-width: 641px) {
-        .pref-header {
-          padding: 10px 22px;
-        }
-        .pref-wordmark {
-          display: none;
-        }
-        .pref-header h1 {
-          font-size: 28px;
-        }
-        .pref-close {
-          top: 7px;
-        }
-        .pref-controls {
-          padding: 6px 20px 12px;
-        }
-        .pref-figure {
-          min-height: 230px;
-        }
-        .pref-panel {
-          padding-top: 10px;
-          gap: 10px;
-        }
-        #audio-panel,
-        #game-panel {
-          gap: 6px;
-        }
-        .pref-footer {
-          padding: 6px 20px;
-        }
-      }
-    </style>
-    <link rel="stylesheet" href="./menu.css" />
+    <link rel="stylesheet" href="./menu.css?v=bellwarden" />
   </head>
   <body>
     <main>
@@ -501,13 +27,24 @@
         hidden
       ></button>
     </main>
-    <div id="touch">
+    <div id="touch" aria-label="Touch controls" hidden>
       <section id="pad"></section>
       <section id="buttons"></section>
     </div>
+    <aside id="touch-actions" aria-labelledby="touch-menu-title" hidden>
+      <h2 id="touch-menu-title" class="touch-menu-title"></h2>
+      <p class="touch-menu-excerpt" hidden></p>
+      <div class="touch-menu-buttons"></div>
+    </aside>
     <dialog id="preferences" aria-labelledby="pref-title">
       <header class="pref-header">
-        <span class="pref-wordmark" aria-hidden="true">✧ &nbsp; Veilbound</span>
+        <img
+          class="pref-crest"
+          src="../assets/media/compass.webp"
+          width="50"
+          height="50"
+          alt=""
+        />
         <h1 id="pref-title">Settings</h1>
         <button
           type="button"
@@ -691,7 +228,8 @@
       </footer>
     </dialog>
     <input hidden id="loadfile" type="file" accept=".json,application/json" />
-    <script src="./presentation.js"></script>
+    <script src="./presentation.js?v=bellwarden"></script>
+    <script src="./ui.js?v=bellwarden"></script>
     <script>
       "use strict";
       const cv = document.querySelector("canvas"),
@@ -711,6 +249,11 @@
         guardians: new Image(),
         instruments: new Image(),
         "last-bell": new Image(),
+        "kit-book": new Image(),
+        "kit-roll": new Image(),
+        "kit-surfaces": new Image(),
+        "kit-fittings": new Image(),
+        "kit-sign": new Image(),
       };
       const villageSprites = {
         arch: [
@@ -771,6 +314,15 @@
           image.onload = () => {
             roomCache = titleCache = null;
             previewFrame = -1;
+            if (
+              [
+                "world-surfaces",
+                "village-ground",
+                "region-props",
+                "sanctum-props",
+              ].includes(name)
+            )
+              vistaLayer = null;
             redrawBehindSettings = true;
           };
           image.src = `./art/${name}.webp`;
@@ -913,57 +465,6 @@
           txt(a, x, y, c, n);
           x += g.measureText(a).width + space;
         }
-      }
-      function frame(x, y, w, h) {
-        function corners(d) {
-          return [
-            [x + d, y],
-            [x + w - d, y],
-            [x + w, y + d],
-            [x + w, y + h - d],
-            [x + w - d, y + h],
-            [x + d, y + h],
-            [x, y + h - d],
-            [x, y + d],
-          ];
-        }
-        poly(corners(4), "#151627");
-        g.save();
-        g.beginPath();
-        for (const [i, [X, Y]] of corners(4).entries())
-          i ? g.lineTo(X, Y) : g.moveTo(X, Y);
-        g.closePath();
-        g.clip();
-        const panel = g.createLinearGradient(x, y, x + w * 0.65, y + h);
-        panel.addColorStop(0, "#343d58");
-        panel.addColorStop(0.5, "#202b41");
-        panel.addColorStop(1, "#171e33");
-        g.fillStyle = panel;
-        g.fillRect(x + 1, y + 1, w - 2, h - 2);
-        g.strokeStyle = "#c2a373";
-        g.lineWidth = 0.73;
-        for (const inset of [1, 3.15]) {
-          g.beginPath();
-          for (const [i, [X, Y]] of corners(4).entries()) {
-            const u = X + (X < x + w / 2 ? inset : -inset),
-              v = Y + (Y < y + h / 2 ? inset : -inset);
-            i ? g.lineTo(u, v) : g.moveTo(u, v);
-          }
-          g.closePath();
-          g.stroke();
-          g.strokeStyle = "#82725480";
-        }
-        if (w > 80 && h > 13)
-          for (const [X, Y] of [
-            [x + 5, y + 5],
-            [x + w - 5, y + 5],
-            [x + 5, y + h - 5],
-            [x + w - 5, y + h - 5],
-          ]) {
-            petalGlyph(X, Y, 1.81, "#d0af7b");
-            rect(X - 0.27, Y - 0.37, 0.54, 0.68, "#f5d9a0");
-          }
-        g.restore();
       }
       function spark(x, y, c, n = 2) {
         rect(x - n, y, n * 2 + 1, 1, c);
@@ -1474,7 +975,9 @@
       addEventListener("keydown", (e) => {
         if (
           preferences.open ||
-          (e.target === hudSettings && ["Enter", "Space"].includes(e.code))
+          ((e.target === hudSettings ||
+            e.target?.closest?.("#touch-actions")) &&
+            ["Enter", "Space"].includes(e.code))
         )
           return;
         if (bindAction) {
@@ -1504,6 +1007,8 @@
         pressed.clear();
         rawKeys.clear();
         touch.clear();
+        for (const button of touchArtwork.values())
+          button.classList.remove("held");
         padHeld.clear();
       }
       function pause() {
@@ -1517,52 +1022,74 @@
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) pause();
       });
-      for (const [id, arr] of [
+      const touchArtwork = new Map();
+      for (const [id, controls] of [
         [
           "pad",
           [
             [null, ""],
-            ["up", "▲"],
+            ["up", "↑"],
             [null, ""],
-            ["left", "◀"],
-            ["down", "▼"],
-            ["right", "▶"],
+            ["left", "←"],
+            [null, ""],
+            ["right", "→"],
+            [null, ""],
+            ["down", "↓"],
+            [null, ""],
           ],
         ],
         [
           "buttons",
           [
-            ["slot1", "Q"],
-            ["slot2", "E"],
+            ["slot1", "I"],
+            ["slot2", "II"],
             ["inventory", "Bag"],
             ["shield", "◈"],
-            ["act", "F"],
+            ["act", "Use"],
             ["attack", "⚔"],
             ["map", "Map"],
             ["dodge", "↠"],
             ["pause", "Ⅱ"],
           ],
         ],
-      ])
-        for (const [a, s] of arr) {
-          let b = document.createElement("button");
-          b.textContent = s;
-          if (!a) b.className = "gap";
-          else {
-            b.setAttribute("aria-label", a);
-            b.onpointerdown = (e) => {
+      ]) {
+        for (const [action, label] of controls) {
+          const button = document.createElement("button");
+          button.type = "button";
+          const icon = document.createElement("span");
+          icon.className = "touch-icon";
+          icon.setAttribute("aria-hidden", "true");
+          icon.textContent = label;
+          button.append(icon);
+          if (!action) {
+            button.className = "gap";
+            button.disabled = true;
+            button.setAttribute("aria-hidden", "true");
+          } else {
+            button.dataset.action = action;
+            button.setAttribute("aria-label", action);
+            button.title = bindingLabels[action];
+            touchArtwork.set(action, button);
+            button.onpointerdown = (e) => {
               e.preventDefault();
-              b.setPointerCapture(e.pointerId);
-              touch.add(a);
-              down(a);
+              button.setPointerCapture(e.pointerId);
+              touch.add(action);
+              button.classList.add("held");
+              down(action);
             };
-            b.onlostpointercapture = b.onpointerup = () => {
-              touch.delete(a);
-              syncHeld();
-            };
+            button.onlostpointercapture =
+              button.onpointercancel =
+              button.onpointerup =
+                () => {
+                  touch.delete(action);
+                  button.classList.remove("held");
+                  syncHeld();
+                };
           }
-          document.getElementById(id).append(b);
+          document.getElementById(id).append(button);
         }
+      }
+      const refreshTouchShell = mountTouchShell();
       function gamepad() {
         let gp = navigator.getGamepads?.()[0];
         if (!gp) {
@@ -2338,8 +1865,8 @@
       }
       function speakerPortrait(id, x, y) {
         g.save();
-        rect(x, y, 34, 41, "#a78b60");
-        rect(x + 1, y + 1, 32, 39, "#30433f");
+        kitPlate("leather", x - 2, y - 2, 38, 45);
+        kitSurface(S.world ? "slate" : "velvet", x + 1, y + 1, 32, 39);
         g.beginPath();
         g.rect(x + 2, y + 2, 30, 37);
         g.clip();
@@ -8589,6 +8116,20 @@
       function exit(dir, to) {
         scene.exits.push({ dir, to });
       }
+      function surfaceConnection(a, b, world) {
+        const route = Math.min(a, b) + "-" + Math.max(a, b);
+        if (world) {
+          if (route === "9-10") return !!S.flags.bridge;
+          if (route === "3-7") return S.done.includes(7);
+          if (route === "4-8") return has(8);
+          return route !== "5-9";
+        }
+        if (route === "0-1") return S.done.includes(0);
+        if (route === "2-6") return has(2);
+        if (route === "9-10") return has(1);
+        if (route === "7-11") return has(3);
+        return route !== "6-10";
+      }
       function surface() {
         let a = S.area,
           w = S.world,
@@ -8598,20 +8139,7 @@
         if (col < 3) exit("right", a + 1);
         if (row) exit("up", a - 4);
         if (row < 2) exit("down", a + 4);
-        scene.exits = scene.exits.filter((e) => {
-          let k = [a, e.to].sort((u, v) => u - v).join("-");
-          if (w) {
-            if (k === "9-10") return !!S.flags.bridge;
-            if (k === "3-7") return S.done.includes(7);
-            if (k === "4-8") return has(8);
-            return k !== "5-9";
-          }
-          if (k === "0-1") return S.done.includes(0);
-          if (k === "2-6") return has(2);
-          if (k === "9-10") return has(1);
-          if (k === "7-11") return has(3);
-          return k !== "6-10";
-        });
+        scene.exits = scene.exits.filter((e) => surfaceConnection(a, e.to, w));
         for (const [kind, x, y] of setDress[a]) {
           obj("scenery", x, y, { kind });
           wall(x - 4, y - 2, 8, 4, "invisible");
@@ -14356,7 +13884,7 @@
           }
         }
         ambientArt();
-        hud();
+        drawGameHud();
         if (mode === "play" && S.d >= 0 && S.r !== 11) {
           let e = scene.exits.find((e) =>
             e.dir === "left"
@@ -14368,10 +13896,11 @@
                   : p.y > 181 && Math.abs(p.x - 192) < 20,
           );
           if (e) {
-            let s = e.to < 0 ? "Overworld" : rooms[e.to],
-              width = s.length * 4 + 10;
-            rect(192 - width / 2, 29, width, 11, "#182727d9");
-            txt(s, 192, 37, "#e3ce9c", 6, "center");
+            statusRibbon(
+              e.to < 0 ? "Overworld" : rooms[e.to],
+              29,
+              S.world ? "slate" : "wood",
+            );
           }
         }
         let o = near();
@@ -14380,22 +13909,11 @@
           mode === "play" &&
           !(o.type === "token" && S.quests[o.id] !== 1)
         ) {
-          let s = keyName("act") + " " + (o.label || labels[o.type]),
-            x = clamp(p.x, 44, 340),
-            y = Math.max(50, p.y - (artReady(paintedArt.rowan) ? 28 : 22));
-          g.font = "6px monospace";
-          let width = g.measureText(s).width + 7;
-          rect(x - width / 2 - 0.56, y - 7.55, width + 1.12, 9.49, "#967454");
-          rect(x - width / 2, y - 7, width, 8.36, "#202538");
-          txt(s, x, y, "#ffe2ad", 6, "center");
+          const y = Math.max(52, p.y - (artReady(paintedArt.rowan) ? 28 : 22));
+          interactionTag(o.label || labels[o.type], p.x, y);
         }
-        if (noticeTime > 0 && mode === "play") {
-          let s = notice;
-          g.font = "6px monospace";
-          let width = Math.min(374, g.measureText(s).width + 14);
-          frame(192 - width / 2, 202.8, width, 11.8);
-          txt(s, 192, 211.55, "#f0d6a3", 6, "center");
-        }
+        if (noticeTime > 0 && mode === "play")
+          statusRibbon(notice, 201.8, S.world ? "slate" : "wood");
         if (flash && !opts.reduced)
           rect(
             0,
@@ -14445,115 +13963,6 @@
         }
         if (c !== "#58615b") rect(x + 1, y, 1, 1, "#ffd2a8");
       }
-      function hud() {
-        let band = g.createLinearGradient(0, 0, 0, 27);
-        band.addColorStop(0, "#30354d");
-        band.addColorStop(0.17, "#232b42");
-        band.addColorStop(0.86, "#171e33");
-        band.addColorStop(1, "#111729");
-        g.fillStyle = band;
-        g.fillRect(0, 0, W, 27);
-        rect(0, 0, W, 0.63, "#dcb17583");
-        rect(0, 25, W, 0.59, "#806d54");
-        rect(0, 26, W, 1, "#bc985e");
-        for (let x of [3, 112, 271, 381]) {
-          rect(x, 25.4, 2.27, 1.05, "#ebc581");
-          rect(x + 1, 13.5, 0.42, 9, "#8172583b");
-        }
-        for (let i = 0; i < Math.min(14, Math.ceil(S.max / 2)); i++)
-          heart(
-            8 + i * 7,
-            6,
-            i * 2 < S.hp ? "#f07978" : "#58615b",
-            S.hp === i * 2 + 1,
-          );
-        rect(7.2, 15.6, 50.65, 4.61, "#605c63");
-        rect(8.1, 16.25, 48.77, 3.24, "#111527");
-        rect(8.85, 17, (47 * S.magic) / S.mp, 1.81, "#6fa7bf");
-        rect(8.86, 17, (47 * S.magic) / S.mp, 0.51, "#a5dfd2");
-        petalGlyph(58.66, 17.9, 1.45, "#c4b580");
-        if (S.max > 28) txt(S.hp + "/" + S.max, 65, 20, "#f2cca3", 6);
-        if (mode === "play") {
-          for (let i = 0; i < 3; i++) {
-            const y = 8 + i * 4,
-              knob = [283.5, 289, 285.2][i];
-            line(281, y, 292, y, "#96a599");
-            oval(knob, y + 0.5, 1.3, 1.3, "#dfc18e");
-          }
-        }
-        txt(place(), 192, 12.35, "#efdbaf", 9.35, "center", "Georgia");
-        let sub =
-          S.d >= 0
-            ? "F1  ·  " + rooms[S.r].toUpperCase() + "  ·  " + D().keys + " KEY"
-            : S.world
-              ? "THE GLOAM"
-              : "AURELIA";
-        spaced(sub, 192 - (sub.length * 4.2) / 2, 21, 0.6, "#c6ad7c", 6);
-        for (let i = 0; i < 2; i++) {
-          let x = 301 + i * 24;
-          frame(x, 2.4, 18, 18.6);
-          if (S.slots[i] >= 0) glyph(x + 9, 11.76, S.slots[i], 0.83);
-          rect(x - 0.26, 19.5, 6.4, 5.65, "#171b2e");
-          txt(
-            keyName(i ? "slot2" : "slot1"),
-            x + 3,
-            24.14,
-            "#efd2a0",
-            5.15,
-            "center",
-          );
-        }
-        poly(
-          [
-            [354, 4],
-            [357, 8],
-            [354, 11],
-            [351, 8],
-          ],
-          "#c99b5a",
-        );
-        line(352, 8, 354, 5, "#ffe1a2");
-        txt(String(S.cash), 361, 11, "#ead3a1", 7);
-        txt("×" + S.ammo, 354, 21, "#a8bcaf", 6);
-        let timed = scene.frozen
-          ? ["Stillglass", scene.frozen]
-          : scene.roots
-            ? ["Root bridge", scene.roots]
-            : null;
-        if (timed) {
-          txt(
-            timed[0] + " " + (timed[1] / 60).toFixed(1) + "s",
-            8,
-            36,
-            "#f4e9c5",
-            6,
-          );
-        }
-        let boss = scene.mobs.find((m) => m.big);
-        if (boss) {
-          let s = boss.open
-            ? "CORE EXPOSED"
-            : boss.phase === "warn"
-              ? "WINDUP"
-              : boss.big === 1 && boss.phase === "recover"
-                ? "RECOVERING"
-                : boss.name;
-          frame(111, 28, 162, 18);
-          txt(
-            s,
-            192,
-            36.83,
-            boss.open ? "#d8f2c4" : "#f1d4a5",
-            7.13,
-            "center",
-            "Georgia",
-          );
-          rect(123, 39.4, 138, 3, "#15172b");
-          const hp = (138 * Math.max(0, boss.hp)) / boss.maxhp;
-          rect(123, 39.4, hp, 3, boss.open ? "#61976f" : "#9c4c64");
-          rect(123, 39.4, hp, 0.81, boss.open ? "#add49f" : "#e58b8a");
-        }
-      }
       function keyName(a) {
         let k = opts.keys[a]?.[0] || "—";
         return k
@@ -14561,8 +13970,8 @@
           .replace("Arrow", "")
           .replace("Escape", "Esc");
       }
-      function hitBox(x, y, w, h, fn) {
-        hot.push({ x, y, w, h, fn });
+      function hitBox(x, y, w, h, fn, label, active = false) {
+        hot.push({ x, y, w, h, fn, label, active });
       }
       cv.onpointerdown = (e) => {
         e.preventDefault();
@@ -14581,11 +13990,15 @@
         let b = cv.getBoundingClientRect(),
           x = ((e.clientX - b.left) * W) / b.width,
           y = ((e.clientY - b.top) * H) / b.height;
+        uiPointer = { x, y };
         cv.style.cursor = hot.some(
           (b) => x >= b.x && y >= b.y && x < b.x + b.w && y < b.y + b.h,
         )
           ? "pointer"
           : "default";
+      };
+      cv.onpointerleave = () => {
+        uiPointer = null;
       };
       function start(cont) {
         if (cont) {
@@ -14628,64 +14041,8 @@
               i % 3 ? "#dcceb996" : "#eecb90c7",
             );
           }
-        let gold = "#dbb779";
-        line(19, 16, 365, 16, "#beaa775c");
-        for (let x of [19, 365]) spark(x, 16, "#c4a46c", 2);
-        const X = 43,
-          Y = 40;
-        poly(
-          [
-            [X - 7, Y - 7],
-            [X - 2, Y - 3],
-            [X, Y - 10],
-            [X + 2.2, Y - 3.2],
-            [X + 7.4, Y - 7],
-            [X + 5, Y + 1.4],
-            [X - 5, Y + 1.4],
-          ],
-          "#e2bb77",
-        );
-        rect(X - 5, Y + 2.66, 10, 0.76, "#ffe2a3");
-        line(57, 39, 97, 39, "#baa16e");
-        petalGlyph(102, 39, 2.41, "#e3c082");
-        txt("Veilbound", 22, 85, "#11192a", 45, "left", menuDisplay);
-        txt("Veilbound", 21, 84.1, "#735746", 45, "left", menuDisplay);
-        g.font = "45px " + menuDisplay;
-        const amber = g.createLinearGradient(0, 53, 0, 85);
-        for (const [t, col] of [
-          [0, "#fff3c7"],
-          [0.37, "#f8e2a7"],
-          [0.55, "#e5be7f"],
-          [1, "#dbab71"],
-        ])
-          amber.addColorStop(t, col);
-        g.fillStyle = amber;
-        g.fillText("Veilbound", 21, 83);
-        spaced("ECHOES OF THE HOLLOW CROWN", 25, 98, 0.76, "#efd6a7", 6.4);
-        line(26, 109, 105, 109, "#a78a56");
-        spark(110, 109, gold, 2);
-        line(115, 109, 135, 109, "#a78a56");
-        let labelsT = saved
-          ? ["Continue journey", "New journey", "Settings"]
-          : ["Begin journey", "Settings"];
-        labelsT.forEach((label, i) => {
-          menuButton(
-            label,
-            25,
-            121 + i * 20,
-            128,
-            () => titleChoose(i),
-            i === sel,
-            16,
-          );
-        });
-        rect(0, 195, W, 21, "#151a32");
-        rect(0, 195, W, 1, "#85734c");
-        txt("↑ ↓  Select", 18, 208, "#c4c2aa", 6);
-        txt(keyName("act") + "  Confirm", 79, 208, "#c4c2aa", 6);
-        let s = opts.sound ? "Sound on" : "Sound off";
-        txt("♪  " + s, 365, 208, "#d0b98c", 6, "right");
-        hitBox(310, 196, 65, 20, () => toggleSound());
+        titleLockup();
+        if (noticeTime > 0) statusRibbon(notice, 179);
       }
       function titleChoose(i) {
         if (saved) {
@@ -14744,11 +14101,6 @@
           wake();
         }
         clearInput();
-      }
-      function button(s, x, y, w, fn, active = false) {
-        rect(x, y, w, 13, active ? "#d5b67c" : "#2b3b3c");
-        txt(s, x + 5, y + 9, active ? "#26302a" : "#e0d4b5", 7);
-        hitBox(x, y, w, 13, fn);
       }
       function entries() {
         switch (menu) {
@@ -14854,277 +14206,6 @@
         }
         e.target.value = "";
       };
-      function mapArt() {
-        artPanel(1, 28, 51, 327, 103, 172, 0.19);
-        let indoor = S.d >= 0,
-          ox = 74,
-          oy = indoor ? 59 : 64,
-          sx = 74,
-          sy = indoor ? 27 : 36;
-        txt(
-          indoor ? names[S.d] : mapWorld ? "The Gloam" : "Aurelia",
-          37,
-          49,
-          uiGold,
-          9.5,
-          "left",
-          menuDisplay,
-        );
-        if (!indoor) {
-          for (let i = 0; i < 12; i++) {
-            let X = ox + (i % 4) * sx,
-              Y = oy + Math.floor(i / 4) * sy,
-              known = S.seen.includes(mapWorld * 12 + i);
-            g.save();
-            g.globalAlpha = known ? 0.78 : 0.24;
-            let col = (mapWorld ? shadowPalettes : fieldPalettes)[i];
-            const sheet = paintedArt["world-surfaces"];
-            if (artReady(sheet)) {
-              const cell = i + mapWorld * 12;
-              g.drawImage(
-                sheet,
-                (cell % 6) * tileSize,
-                Math.floor(cell / 6) * tileSize,
-                tileSize,
-                tileSize,
-                X - 33,
-                Y - 8,
-                66,
-                26,
-              );
-              rect(X - 33, Y - 8, 66, 26, mapWorld ? "#21192f49" : "#342d2471");
-              g.restore();
-              continue;
-            }
-            rect(X - 33, Y - 9, 66, 27, "#" + col[0]);
-            rect(X - 32, Y - 8, 64, 25, "#" + col[1] + "50");
-            for (let j = 0; j < 6; j++) {
-              let xx = X - 22 + j * 8,
-                yy = Y + 8 + Math.sin(j + i) * 2;
-              if ([2, 3, 8, 11].includes(i))
-                poly(
-                  [
-                    [xx - 4, yy + 3],
-                    [xx, yy - 4 - (j % 2) * 2],
-                    [xx + 4, yy + 3],
-                  ],
-                  "#" + col[2],
-                );
-              else if ([1, 9, 10].includes(i))
-                line(xx - 3, yy, xx + 2, yy - 1, "#98c3b9");
-              else if (i === 7 || i === 5) {
-                rect(xx - 2, yy - 2, 5, 5, "#" + col[2]);
-                poly(
-                  [
-                    [xx - 3, yy - 2],
-                    [xx, yy - 5],
-                    [xx + 3, yy - 2],
-                  ],
-                  "#a87864",
-                );
-              } else {
-                poly(
-                  [
-                    [xx - 3, yy + 2],
-                    [xx, yy - 4],
-                    [xx + 3, yy + 2],
-                  ],
-                  "#" + col[2],
-                );
-                rect(xx, yy + 1, 1, 2, "#" + col[2]);
-              }
-            }
-            g.restore();
-          }
-        }
-        let arr = indoor
-          ? layouts.map((_, i) => planPoint(S.d, i))
-          : Array.from({ length: 12 }, (_, i) => [i % 4, Math.floor(i / 4)]);
-        if (indoor) {
-          for (let [a, b] of dungeonEdges(S.d)) {
-            if (
-              !D().flags.map &&
-              (!D().seen.includes(a) || !D().seen.includes(b))
-            )
-              continue;
-            line(
-              ox + arr[a][0] * sx,
-              oy + arr[a][1] * sy,
-              ox + arr[b][0] * sx,
-              oy + arr[b][1] * sy,
-              "#c4a681",
-            );
-          }
-        } else
-          for (let i = 0; i < 12; i++) {
-            let [x, y] = arr[i];
-            if (x < 3)
-              line(
-                ox + x * sx,
-                oy + y * sy,
-                ox + (x + 1) * sx,
-                oy + y * sy,
-                "#c6a67789",
-              );
-            if (y < 2)
-              line(
-                ox + x * sx,
-                oy + y * sy,
-                ox + x * sx,
-                oy + (y + 1) * sy,
-                "#c6a67789",
-              );
-          }
-        arr.forEach(([x, y], i) => {
-          let X = ox + x * sx,
-            Y = oy + y * sy,
-            seen = indoor
-              ? D().seen.includes(i)
-              : S.seen.includes(mapWorld * 12 + i),
-            show = seen || (indoor && D().flags.map),
-            here = indoor ? S.r === i : S.area === i && mapWorld === S.world;
-          rect(
-            X - 22,
-            Y - 6,
-            45,
-            13,
-            here ? "#e8c391" : show ? "#9f8b78" : "#52475e",
-          );
-          rect(
-            X - 21.4,
-            Y - 5.4,
-            43.8,
-            11.8,
-            here ? "#bd965d" : show ? "#2e293f" : "#211e31",
-          );
-          const label = indoor
-            ? rooms[i]
-            : (mapWorld ? gloam : places)[i].replace(/^The /, "");
-          const lines = show ? wrap(label, 14) : ["·"];
-          lines.forEach((part, j) =>
-            txt(
-              part,
-              X,
-              Y + (lines.length > 1 ? -0.8 + j * 6.4 : 2.7),
-              here ? "#292035" : uiPaper,
-              lines.length > 1 ? 6.15 : 7,
-              "center",
-              menuDisplay,
-            ),
-          );
-          if (indoor && i === 11 && S.done.includes(S.d))
-            txt("✓", X + 22, Y, "#b4e5a0", 7);
-          if (
-            indoor &&
-            D().flags.compass &&
-            { 3: !flag("key"), 6: !has(S.d), 8: !flag("great") }[i]
-          )
-            spark(X + 20, Y - 6, "#ead08d", 2);
-          if (!indoor && seen) {
-            let id = sites.findIndex(
-              (a, j) => a === i && j >= 4 === !!mapWorld,
-            );
-            if (id >= 0)
-              txt(S.done.includes(id) ? "✓" : "◆", X - 19, Y - 6, "#ebc982", 6);
-            if (S.bells.includes(mapWorld * 12 + i))
-              txt("♪", X + 16, Y - 6, "#a5ddd7", 6);
-            if (S.notes[mapWorld * 12 + i]) spark(X, Y - 7, "#f1ab8b", 2);
-            hitBox(X - 22, Y - 7, 45, 14, () => {
-              S.notes[mapWorld * 12 + i] = !S.notes[mapWorld * 12 + i];
-              save();
-            });
-          }
-        });
-        if (!indoor) {
-          menuButton(
-            mapWorld ? "View Aurelia" : "View The Gloam",
-            37,
-            161,
-            85,
-            () => (mapWorld = 1 - mapWorld),
-          );
-          menuButton("Mark current area", 129, 161, 91, () => {
-            S.notes[loc()] = !S.notes[loc()];
-            save();
-          });
-        }
-        txt(
-          indoor
-            ? "Gold marks indicate treasure with the indicator."
-            : "◆ Entrance     ♪ Bell     + Note     Arrows switch worlds",
-          37,
-          185,
-          uiMuted,
-          6.3,
-        );
-      }
-      function dialogueArt() {
-        if (scene.obj) drawScene();
-        else title();
-        if (dialog.w.startsWith("Treasury · ")) {
-          let y = 92 + Math.sin(dialog.age / 14) * 2;
-          oval(192, y - 7, 18, 15, "#29342c");
-          for (let j = 0; j < 8; j++) {
-            let a = (j * TAU) / 8;
-            rect(
-              192 + Math.cos(a) * 22,
-              y - 7 + Math.sin(a) * 18,
-              2,
-              1,
-              "#dfc181",
-            );
-          }
-          glyph(192, y - 6, S.d, 1.7);
-        }
-        const shade = g.createLinearGradient(0, 121, 0, 216);
-        shade.addColorStop(0, "#11112300");
-        shade.addColorStop(1, "#0c1023c6");
-        rect(0, 121, W, H - 121, shade);
-        frame(16, 150, 352, 59);
-        let portrait = portraitId(dialog.w),
-          left = portrait < 0 ? 27 : 63;
-        if (portrait >= 0) speakerPortrait(portrait, 23, 159);
-        txt(dialog.w, left, 165, uiGold, 10.2, "left", menuDisplay);
-        rect(left, 169, 333 - left, 0.48, uiRule);
-        let s = dialog.s.slice(
-          0,
-          opts.fast ? 999 : Math.floor(dialog.age * 3) + 5,
-        );
-        wrap(s, portrait < 0 ? 76 : 67).forEach((line, i) =>
-          txt(line, left, 180 + i * 8.7, uiPaper, 8, "left", menuDisplay),
-        );
-        txt("›", 356, 202, "#e0bd7b", 10, "right");
-      }
-      function endingArt() {
-        const dawn = paintedArt["last-bell"];
-        if (artReady(dawn)) g.drawImage(dawn, 0, 0, W, H);
-        else {
-          if (!titleCache) titleCache = makeLayer(landscape);
-          g.drawImage(titleCache, 0, 0, W, H);
-          stamp("ending-ione", 310, 161, 1.7, 1, mentorModel);
-        }
-        const shade = g.createLinearGradient(0, 0, 279, 0);
-        shade.addColorStop(0, "#121325ef");
-        shade.addColorStop(0.64, "#15182caa");
-        shade.addColorStop(1, "#15182c00");
-        rect(0, 0, W, H, shade);
-        spaced("THE LAST BELL", 31, 47, 1.34, uiGold, 6.2);
-        txt("Two dawns, one song", 30, 75, uiPaper, 22, "left", menuDisplay);
-        menuRule(28, 85, 178);
-        const neighbours = S.quests.filter((q) => q === 3).length;
-        const s =
-          "Ione lowers the lantern. Across the divide, the bells answer one another. " +
-          (neighbours
-            ? "The " +
-              neighbours +
-              " neighbours you helped carry the melody home."
-            : "In Bellwick, a single lamp waits in the window.") +
-          " Rowan takes the morning watch.";
-        wrap(s, 51).forEach((line, i) =>
-          txt(line, 32, 101 + i * 10, uiPaper, 8.6, "left", menuDisplay),
-        );
-        menuButton("Explore before the finale", 32, 161, 155, retry, true, 18);
-      }
       function step() {
         tick++;
         gamepad();
@@ -15200,17 +14281,19 @@
             hot = [];
           }
           drawSettingsPreview();
+          refreshTouchShell();
           return;
         }
         if (preferences.open) preferences.close();
         if (mode === "title") title();
         else if (mode === "menu") paintGameMenu();
-        else if (mode === "talk") dialogueArt();
-        else if (mode === "ending") endingArt();
+        else if (mode === "talk") paintDialogue();
+        else if (mode === "ending") paintEnding();
         else {
           drawScene();
           if (mode === "defeat") paintDefeat();
         }
+        refreshTouchShell();
       }
       let prev = performance.now(),
         acc = 0;
@@ -15229,145 +14312,71 @@
       const vistaWidth = 248,
         vistaHeight = 236;
       function sanctuaryVista() {
-        const r = rng(5681);
-        let sky = g.createLinearGradient(0, 0, 0, 202);
-        for (const [t, c] of [
-          [0, "#152838"],
-          [0.33, "#53666b"],
-          [0.63, "#d6a77d"],
-          [0.8, "#dcb47d"],
-          [1, "#657267"],
-        ])
-          sky.addColorStop(t, c);
-        g.fillStyle = sky;
-        g.fillRect(0, 0, vistaWidth, vistaHeight);
-        const sun = g.createRadialGradient(151, 87, 5, 151, 87, 57);
-        sun.addColorStop(0, "#ffe6a770");
-        sun.addColorStop(1, "#f4b77900");
-        g.fillStyle = sun;
-        g.fillRect(82, 18, 138, 138);
-        oval(151, 87, 10, 10, "#f4d6a4");
-        for (let i = 0; i < 65; i++) {
-          let x = r() * 248,
-            y = r() * 122;
-          oval(
-            x,
-            y,
-            2 + r() * 16,
-            0.16 + r() * 0.55,
-            y < 65 ? "#cabba72c" : "#f3cf9e46",
-          );
-        }
-        for (let i = 0; i < 32; i++) {
-          let x = r() * 248,
-            y = r() * 65;
-          if (y < 42 + r() * 18)
-            oval(x, y, 0.14 + r() * 0.36, 0.15 + r() * 0.36, "#fbebcd91");
-        }
-        for (let layer = 0; layer < 3; layer++) {
-          const pts = [[-4, 236]],
-            base = 108 + layer * 16;
-          for (let x = -4; x <= 254; x += 3) {
-            const y =
-              base +
-              Math.sin(x / (20 + layer * 7) + layer * 2) * 8 +
-              valueNoise(x / 16, 2 + layer, 48) * 10;
-            pts.push([x, y]);
-          }
-          pts.push([254, 236]);
-          poly(pts, ["#737b79", "#51696a", "#345658"][layer]);
-          if (layer > 0)
-            for (let x = -5; x < 256; x += 2 + r() * 4) {
-              let i = Math.min(pts.length - 2, 1 + Math.floor((x + 5) / 3));
-              pine(
-                x,
-                pts[i][1] + 2,
-                2 + r() * (layer * 3.6),
-                "#" + (layer === 1 ? "51696a" : "345658"),
-                null,
-                i,
-              );
-            }
-        }
-        const bank = [
-          [0, 166],
-          [21, 157],
-          [42, 163],
-          [61, 162],
-          [85, 171],
-          [107, 168],
-          [129, 175],
-          [151, 171],
-          [180, 161],
-          [200, 159],
-          [224, 148],
-          [248, 150],
-          [248, 236],
-          [0, 236],
-        ];
-        poly(bank, "#33483e");
-        for (let i = 0; i < 76; i++) {
-          let x = r() * 255,
-            y = 162 + Math.sin(x * 0.047) * 6 + r() * 10;
-          if (x < 64 || x > 218) pine(x, y, 8 + r() * 23, "#344a40", null, i);
-        }
-        for (const [x, y, h] of [
-          [4, 173, 79],
-          [28, 164, 52],
-          [53, 171, 40],
-          [250, 166, 70],
-          [221, 161, 39],
-        ])
-          pine(x, y, h, "#243e37", "#466052", Math.floor(x));
-        const earth = g.createLinearGradient(0, 173, 0, 236);
-        earth.addColorStop(0, "#5d6650");
-        earth.addColorStop(0.35, "#3b5043");
-        earth.addColorStop(1, "#132d29");
-        g.fillStyle = earth;
+        rect(0, 0, vistaWidth, vistaHeight, "#526044");
+        if (
+          materialFill(
+            paintedArt["world-surfaces"],
+            6,
+            0,
+            tileSize,
+            127,
+            98,
+            -13,
+            17,
+          )
+        )
+          g.fillRect(0, H, vistaWidth, vistaHeight - H);
+        g.save();
         g.beginPath();
-        g.moveTo(0, 181);
-        g.bezierCurveTo(37, 170, 80, 179, 113, 174);
-        g.bezierCurveTo(148, 164, 183, 181, 248, 164);
-        g.lineTo(248, 236);
-        g.lineTo(0, 236);
-        g.fill();
-        for (let i = 0; i < 320; i++) {
-          let x = r() * 248,
-            y = 181 + r() * 54,
-            h = 0.45 + r() * 2.4;
-          line(
-            x,
-            y,
-            x + h * 0.75,
-            y - h,
-            r() > 0.6 ? "#c5b58549" : "#58766488",
-          );
+        g.moveTo(80, vistaHeight);
+        g.bezierCurveTo(103, 195, 176, 169, 145, 118);
+        g.lineTo(123, 88);
+        g.lineTo(104, 112);
+        g.bezierCurveTo(129, 173, 78, 186, 59, vistaHeight);
+        g.closePath();
+        g.clip();
+        if (materialFill(paintedArt["village-ground"], 3, 2, 384, 105, 85))
+          g.fillRect(0, H, vistaWidth, vistaHeight - H);
+        else rect(0, 0, vistaWidth, vistaHeight, "#b9915f");
+        g.restore();
+        for (const [x, y, size, flip] of [
+          [12, 62, 84, 1],
+          [57, 52, 59, -1],
+          [113, 53, 60, 1],
+          [179, 61, 74, -1],
+          [246, 67, 83, 1],
+          [23, 147, 76, -1],
+          [239, 168, 86, 1],
+          [3, 235, 82, 1],
+          [244, 240, 89, -1],
+        ]) {
+          groundShadow(x, y, size * 0.26, size * 0.075);
+          if (!paintedCutout("region-props", 0, 4, x, y, size, flip))
+            tree(x, y, 0, x + y, size / 48);
         }
-        for (let i = 0; i < 17; i++) {
-          let x = 115 + Math.sin(i * 0.28) * 8 + (r() - 0.5) * 12,
-            y = 174 + i * 2.5;
-          oval(x, y, 2.5 + i * 0.2, 1 + i * 0.06, "#ada07b65");
-        }
-        groundShadow(100, 177, 29, 5, 4);
-        stamp("preferences/gate", 100, 177, 1.85, 1, () => entranceSculpt(0));
-        paintedCutout("sanctum-props", 0, 5, 51, 192, 47, -1);
-        paintedCutout("sanctum-props", 0, 5, 206, 196, 44);
-        rock(69, 179, 0.87, false);
-        rock(129, 179, 0.53, false);
-        for (let i = 0; i < 17; i++) {
-          let x = i % 2 ? 14 + r() * 47 : 188 + r() * 53,
-            y = 194 + r() * 12,
-            h = 3 + r() * 10;
-          line(x, y, x + h * 0.24, y - h, "#66795d");
-          oval(x + h * 0.24, y - h, 0.8 + r() * 0.5, 1, "#d5b476");
-        }
-        for (const [x, y, h] of [
-          [-5, 211, 133],
-          [11, 197, 70],
-          [248, 205, 105],
-          [233, 210, 58],
+        floorLight(128, 119, 85, 60, "#ffe19f", 0.23);
+        groundShadow(125, 118, 29, 5.3);
+        stamp("preferences/gate", 125, 118, 2.01, 1, () => entranceSculpt(0));
+        for (const [x, y, size, flip] of [
+          [71, 132, 43, -1],
+          [190, 141, 48, 1],
         ])
-          pine(x, y, h, "#1c3630", "#385245", Math.floor(y));
+          paintedCutout("sanctum-props", 0, 5, x, y, size, flip);
+        for (const [x, y, size] of [
+          [57, 116, 0.83],
+          [54, 174, 1.0],
+          [103, 150, 0.62],
+          [165, 134, 0.88],
+          [166, 189, 0.82],
+          [211, 196, 0.93],
+          [38, 208, 0.84],
+          [145, 223, 1.02],
+        ])
+          villageSprite("flowers", x, y, 0, size, x % 2 ? -1 : 1);
+        const border = g.createRadialGradient(123, 127, 55, 123, 127, 153);
+        border.addColorStop(0, "#13131a00");
+        border.addColorStop(1, "#15142176");
+        rect(0, 0, vistaWidth, vistaHeight, border);
       }
       let vistaLayer = null,
         previewFrame = -1;
@@ -15390,9 +14399,9 @@
           g.setTransform(density, 0, 0, density, 0, 0);
           g.imageSmoothingEnabled = density > 1;
           g.drawImage(vistaLayer, 0, 0, vistaWidth, vistaHeight);
-          groundShadow(151, 184, 9, 2.7);
-          if (!paintedRowan(151, 184, 1.42, -1, "side", "idle", 0, false))
-            stamp("preferences/rowan", 151, 184, 1.42, 1, () =>
+          groundShadow(140, 165, 9, 2.7);
+          if (!paintedRowan(140, 165, 1.42, -1, "side", "idle", 0, false))
+            stamp("preferences/rowan", 140, 165, 1.42, 1, () =>
               rowanModel("side", 0, "idle", false, -1),
             );
           if (opts.atmosphere)

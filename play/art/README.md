@@ -16,6 +16,11 @@ The bundled WebP sheets were made with built-in ImageGen using the supplied Bell
 | [instruments.webp](instruments.webp) | Four columns by three rows of 256 × 256 sprites in instrument order. |
 | [interface.webp](interface.webp) | A two-by-two atlas of the handbell, journal, satchel, and compass. |
 | [last-bell.webp](last-bell.webp) | A 1600 × 900 dawn illustration for the ending. |
+| [kit-book.webp](kit-book.webp) | Open vellum field book for the map, journal, and keyboard bindings. |
+| [kit-roll.webp](kit-roll.webp) | Open leather tool roll for equipment. |
+| [kit-surfaces.webp](kit-surfaces.webp) | Six 256 × 256 material tiles for walnut, vellum, leather, felt, brass, and slate. The native controls use cropped copies of the same materials. |
+| [kit-fittings.webp](kit-fittings.webp) | Six 192 × 192 cutouts for the health gem, lantern, keycap, tool socket, and two realm seals. |
+| [kit-sign.webp](kit-sign.webp) | Carved walnut signboard for menu actions and the location plaque. |
 
 ## Generation prompts
 
@@ -33,3 +38,6 @@ The bundled WebP sheets were made with built-in ImageGen using the supplied Bell
 - **Guardians and instruments.** Illustrate the ten guardian silhouettes and the Regent’s fractured form in painted pixels. Produce individual transparent instrument sprites with readable outlines and distinguishing materials.
 - **Menu illustrations.** Paint an engraved handbell, open field journal, leather satchel, and brass compass as four cutouts on transparent backgrounds.
 - **Ending.** Paint Rowan and Ione standing over the forest village at dawn, with the lantern lifted and room for the closing text along the left edge.
+- **Field book and tool roll.** Paint an open brass-bound vellum ledger with a pressed leaf and a separate open oxblood leather roll with stitched suede compartments. Keep the writing and tool surfaces clear for the game renderer.
+- **Interface materials and fittings.** Paint matte walnut, vellum, leather, green felt, hammered brass, and slate as flat game textures. Isolate a red heart gem, an enamel lantern, a blank brass keycap, a felt tool socket, and claret and violet realm seals. Use the eight-point crest from the village bell arch.
+- **Menu sign.** Paint an isolated walnut board with beveled ends, brass leaf fittings, and a clear center for menu labels.
