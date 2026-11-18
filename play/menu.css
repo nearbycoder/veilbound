@@ -1,0 +1,85 @@
+@font-face {
+  font-family: "Veil Serif";
+  src: url("../assets/type/cormorant-garamond-medium.ttf") format("truetype");
+  font-display: swap;
+}
+
+html,
+body {
+  background: #090b16;
+}
+
+#preferences {
+  --paper: #fff0d7;
+  --gold: #ebc996;
+  --mute: #d4cbce;
+  --rule: #c0a27c42;
+  border-color: #b99869;
+  border-radius: 3px;
+  background:
+    radial-gradient(ellipse at 90% 6%, #392d47, transparent 61%), #1a1d31;
+  box-shadow:
+    0 20px 100px #050512de,
+    inset 0 0 0 3px #211b32,
+    inset 0 0 0 4px #b998694c;
+}
+
+#preferences::backdrop {
+  background: #0b0a19bf;
+}
+.pref-header {
+  background: linear-gradient(100deg, #68516a49, transparent 75%);
+}
+.pref-header h1 {
+  font-family: "Veil Serif", Georgia, serif;
+  font-size: 48px;
+}
+.pref-figure {
+  background: #242238;
+}
+.pref-figure::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  inset: 8px;
+  border: 1px solid #c9a37366;
+}
+.pref-figure figcaption {
+  background: linear-gradient(transparent, #191729ee 75%);
+}
+.pref-figure figcaption strong {
+  font-family: "Veil Serif", Georgia, serif;
+  font-size: 26px;
+}
+.pref-presets {
+  background: #15162a;
+  border-color: var(--rule);
+}
+.pref-action,
+.pref-footer button {
+  border-color: #b098775d;
+}
+.pref-row,
+.pref-toggle {
+  border-color: var(--rule);
+}
+#touch button {
+  background: #242239dc;
+  border-color: #b99c70;
+}
+
+@media (max-width: 640px), (max-height: 570px) {
+  .pref-header h1 {
+    font-size: clamp(29px, 6.5vw, 42px);
+  }
+  .pref-figure figcaption strong {
+    font-size: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #preferences::backdrop {
+    backdrop-filter: none;
+  }
+}

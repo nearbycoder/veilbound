@@ -21,7 +21,7 @@
     />
     <meta
       property="og:image"
-      content="https://nearbycoder.github.io/veilbound/assets/media/bellwick-share.jpg?v=painted-sprites"
+      content="https://nearbycoder.github.io/veilbound/assets/media/bellwick-share.jpg?v=hollow-crown"
     />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="675" />
@@ -35,7 +35,8 @@
     />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./assets/site.css?v=painted-sprites" />
+    <link rel="stylesheet" href="./assets/site.css?v=hollow-crown" />
+    <link rel="stylesheet" href="./assets/chronicle.css?v=1" />
     <link
       rel="preload"
       href="./assets/type/cormorant-garamond-medium.ttf"
@@ -43,23 +44,23 @@
       type="font/ttf"
       crossorigin
     />
-    <script src="./assets/site.js?v=painted-sprites" defer></script>
+    <script src="./assets/site.js?v=hollow-crown" defer></script>
   </head>
   <body id="top">
-    <a class="skip" href="#main">Skip to game menu</a>
+    <a class="skip" href="#main">Skip to game overview</a>
     <header class="hud">
       <div class="hud-inner">
         <a href="#top" class="brand" aria-label="Veilbound home"
           ><img src="./assets/icon.svg" alt="" />Veilbound</a
         >
         <nav aria-label="Site navigation">
-          <a href="#gameplay">Gameplay</a><a href="#atlas">World atlas</a
-          ><a href="#satchel">Satchel</a><a href="#controls">Controls</a>
+          <a href="#veil">The worlds</a>
+          <a href="#gameplay">Gameplay</a>
+          <a href="#atlas">Field journal</a>
         </nav>
-        <button id="ring" type="button" hidden>
-          <span aria-hidden="true">♫</span>
-          <span class="bell-label">Ring the west bell</span>
-        </button>
+        <a class="nav-play" href="./play/index.html?launch=1&amp;v=hollow-crown"
+          >Play <span aria-hidden="true">↗</span></a
+        >
       </div>
     </header>
     <main id="main">
@@ -67,12 +68,10 @@
         <picture
           ><source
             media="(max-width:650px)"
-            srcset="
-              ./assets/media/moonlit-bell-mobile.webp?v=painted-sprites
-            " />
+            srcset="./assets/media/moonlit-bell-mobile.webp?v=hollow-crown" />
           <img
             class="backdrop"
-            src="./assets/media/moonlit-bell.webp?v=painted-sprites"
+            src="./assets/media/moonlit-bell.webp?v=hollow-crown"
             width="1600"
             height="900"
             fetchpriority="high"
@@ -85,25 +84,31 @@
         <div class="screen-edge" aria-hidden="true"></div>
         <div class="title-content">
           <div class="title-lockup">
-            <div class="crown" aria-hidden="true"><i></i><b></b><i></i></div>
+            <img
+              class="hero-emblem"
+              src="./assets/media/compass.webp"
+              width="56"
+              height="56"
+              alt=""
+            />
             <h1 id="game-title">Veilbound</h1>
             <p class="subtitle">Echoes of the Hollow Crown</p>
           </div>
+          <p class="hero-description">
+            Carry a missing bellwarden’s lantern through two worlds that share
+            the same roads.
+          </p>
           <nav class="game-menu" aria-label="Game menu">
-            <a class="launch" href="./play/index.html?launch=1"
-              ><span class="pointer" aria-hidden="true">▶</span> Play game
-              <small>↵</small></a
+            <a
+              class="launch"
+              href="./play/index.html?launch=1&amp;v=hollow-crown"
+              >Play in browser <span aria-hidden="true">↗</span></a
             >
             <a
               id="watch"
               data-watch
-              href="./assets/media/gameplay.mp4?v=painted-sprites"
-              ><span class="pointer" aria-hidden="true">▶</span> Watch
-              gameplay</a
-            >
-            <a href="#atlas"
-              ><span class="pointer" aria-hidden="true">▶</span> Open field
-              journal</a
+              href="./assets/media/gameplay.mp4?v=hollow-crown"
+              ><span aria-hidden="true">▶</span> Watch gameplay</a
             >
           </nav>
         </div>
@@ -111,7 +116,7 @@
       <div class="dialogue">
         <div class="dialogue-inner">
           <img
-            src="./assets/journal/merin.png?v=painted-sprites"
+            src="./assets/journal/merin.png?v=hollow-crown"
             alt=""
             width="68"
             height="82"
@@ -132,13 +137,65 @@
           </button>
         </div>
       </div>
+      <section class="veil-section" id="veil" aria-labelledby="veil-title">
+        <header class="section-intro">
+          <div>
+            <h2 id="veil-title">Cross the veil</h2>
+            <p>
+              Follow Rowan from Bellwick’s sunlit square into Hushwick, where
+              violet cottages and cyan lanterns mark the same streets.
+            </p>
+          </div>
+          <button id="ring" type="button" hidden>
+            <img
+              src="./assets/media/handbell.webp"
+              width="42"
+              height="56"
+              alt=""
+            />
+            <span class="bell-label">Ring the west bell</span>
+          </button>
+        </header>
+        <div class="veil-controls" hidden>
+          <button type="button" data-reveal="0">Aurelia</button>
+          <label class="veil-range"
+            ><span class="sr-only">Blend from Aurelia to the Gloam</span
+            ><input id="veil-reveal" type="range" min="0" max="100" value="50"
+          /></label>
+          <button type="button" data-reveal="100">The Gloam</button>
+        </div>
+        <div class="veil-frame" id="veil-comparison">
+          <img
+            src="./assets/media/veil-aurelia.webp"
+            width="1200"
+            height="590"
+            loading="lazy"
+            alt="Sunlight on Bellwick’s golden roofs, apple trees, and cobbled square."
+          />
+          <img
+            class="other-world"
+            src="./assets/media/veil-gloam.webp"
+            width="1200"
+            height="590"
+            loading="lazy"
+            alt="The same view in Hushwick, with violet cottages and glowing blue mushrooms."
+          />
+          <span class="veil-seam" aria-hidden="true"><b>◆</b></span>
+        </div>
+      </section>
       <section class="gameplay" id="gameplay" aria-labelledby="gameplay-title">
         <header class="gameplay-heading">
-          <h2 id="gameplay-title">Scenes from Veilbound</h2>
+          <div>
+            <h2 id="gameplay-title">Beyond the village</h2>
+            <p>
+              Explore the roads of Aurelia and the Gloam. Find an instrument in
+              each dungeon and use it to bring down the guardian inside.
+            </p>
+          </div>
           <a
             class="reel-link"
             data-watch
-            href="./assets/media/gameplay.mp4?v=painted-sprites"
+            href="./assets/media/gameplay.mp4?v=hollow-crown"
           >
             <span aria-hidden="true">▶</span> Watch gameplay
           </a>
@@ -146,31 +203,31 @@
         <div class="capture-grid">
           <figure class="capture">
             <img
-              src="./assets/media/bellwick.webp?v=painted-sprites"
-              alt="Rowan crosses Bellwick’s cobbled square between an engraved bell arch, apple trees, and a striped market stall."
+              src="./assets/media/orchard.webp"
+              alt="Rowan follows a path beneath apple trees and the old green mossbell arch."
               width="1200"
               height="675"
               loading="lazy"
             />
             <figcaption>
-              <span>Bellwick Village</span><small>Aurelia</small>
+              <span>Orchard Weald</span><small>Aurelia</small>
             </figcaption>
           </figure>
           <figure class="capture">
             <img
-              src="./assets/media/hushwick.webp?v=painted-sprites"
-              alt="Rowan in the same square in Hushwick, with violet stone, wine-red trees, and cyan-lit mushrooms and windows."
+              src="./assets/media/foundry.webp"
+              alt="Rowan approaches the Cinder Colossus across a red bronze floor flanked by furnaces."
               width="1200"
               height="675"
               loading="lazy"
             />
             <figcaption>
-              <span>Hushwick</span><small>The Gloam</small>
+              <span>Emberglass Foundry</span><small>Heart chamber</small>
             </figcaption>
           </figure>
           <figure class="capture">
             <img
-              src="./assets/media/drowned-choir.webp?v=painted-sprites"
+              src="./assets/media/drowned-choir.webp?v=hollow-crown"
               alt="Rowan faces the exposed Abyssal Chorister among rippling floor emblems and blue torchlight."
               width="1200"
               height="675"
@@ -182,7 +239,7 @@
           </figure>
           <figure class="capture">
             <img
-              src="./assets/media/frostbound.webp?v=painted-sprites"
+              src="./assets/media/frostbound.webp?v=hollow-crown"
               alt="The Pale Archivist stands in a chamber of ice, with a snowflake engraved in the floor."
               width="1200"
               height="675"
@@ -233,7 +290,7 @@
                 <img
                   id="land-art"
                   loading="lazy"
-                  src="./assets/journal/land-0-5.webp?v=painted-sprites"
+                  src="./assets/journal/land-0-5.webp?v=hollow-crown"
                   width="620"
                   height="294"
                   alt="Bellwick Village in Aurelia."
@@ -303,7 +360,9 @@
                 northwest to Mossbell Sanctuary. Explore its chambers, recover
                 the Gale Disc, and face the Briar Cantor.
               </p>
-              <a class="ink-link" href="./play/index.html?launch=1"
+              <a
+                class="ink-link"
+                href="./play/index.html?launch=1&amp;v=hollow-crown"
                 >▶ Play Veilbound</a
               >
             </div>
@@ -355,11 +414,33 @@
           </div>
         </section>
       </section>
+      <section class="final-invite" aria-labelledby="invite-title">
+        <img
+          src="./assets/media/handbell.webp"
+          width="100"
+          height="132"
+          alt=""
+          loading="lazy"
+        />
+        <div>
+          <h2 id="invite-title">Take up the lantern</h2>
+          <p>
+            Play with a keyboard, gamepad, or touch controls. Your journey saves
+            in your browser.
+          </p>
+        </div>
+        <a
+          class="call-to-play"
+          href="./play/index.html?launch=1&amp;v=hollow-crown"
+          >Play in browser <span aria-hidden="true">↗</span></a
+        >
+      </section>
     </main>
     <footer>
       <a class="brand" href="#top"
         ><img src="./assets/icon.svg" alt="" />Veilbound</a
-      ><a href="./play/index.html?launch=1">Play in browser ↗</a
+      ><a href="./play/index.html?launch=1&amp;v=hollow-crown"
+        >Play in browser ↗</a
       ><a href="https://github.com/nearbycoder/veilbound">Repository ↗</a>
     </footer>
     <dialog id="screening" aria-labelledby="film-title">
@@ -371,15 +452,15 @@
         controls
         playsinline
         preload="none"
-        poster="./assets/media/bellwick.webp?v=painted-sprites"
+        poster="./assets/media/bellwick.webp?v=hollow-crown"
         aria-label="Silent gameplay footage showing exploration and dungeon combat"
       >
         <source
-          src="./assets/media/gameplay.mp4?v=painted-sprites"
+          src="./assets/media/gameplay.mp4?v=hollow-crown"
           type="video/mp4"
         />
       </video>
-      <p>Bellwick Village · Hushwick · Drowned Choir · Ashen Hourworks</p>
+      <p>Orchard Weald · Hushwick · Emberglass Foundry · Drowned Choir</p>
     </dialog>
   </body>
 </html>

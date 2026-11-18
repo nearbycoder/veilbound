@@ -362,10 +362,20 @@ try {
     path.join(output, "environment-gallery.png"),
     Buffer.from(await ev("environmentGallery()"), "base64"),
   );
+  await ev(screenGallery.toString());
+  const audit = await ev("screenGallery()");
+  for (const name of ["room-gallery", "menu-gallery"])
+    fs.writeFileSync(
+      path.join(output, name + ".webp"),
+      Buffer.from(audit[name], "base64"),
+    );
   await ev(verifyArtwork.toString());
   await ev(extraChecks.toString());
   const checks = [...settingsChecks, ...(await run("extraChecks()"))];
   checks.push(...(await run("verifyArtwork()")));
+  checks.push(
+    "Rendered 120 dungeon rooms, 24 side-cave variants and every canvas menu for visual review",
+  );
   await call("Page.removeScriptToEvaluateOnNewDocument", {
     identifier: preload.result.identifier,
   });
@@ -1381,6 +1391,128 @@ function environmentGallery() {
     noticeTime = previousNotice;
   }
   return sheet.toDataURL("image/png").split(",")[1];
+}
+function screenGallery() {
+  const save = S;
+  const state = {
+    mode,
+    menu,
+    menuFrom,
+    sel,
+    page,
+    mapWorld,
+    dialog,
+    noticeTime,
+  };
+  const position = [p.x, p.y];
+  const create = (cols, rows) => {
+    const sheet = document.createElement("canvas");
+    sheet.width = cols * 240;
+    sheet.height = rows * 153;
+    return sheet;
+  };
+  const draw = (sheet, cols, index, label) => {
+    paint();
+    const ctx = sheet.getContext("2d");
+    const x = (index % cols) * 240,
+      y = Math.floor(index / cols) * 153;
+    ctx.drawImage(cv, x, y, 240, 135);
+    ctx.fillStyle = "#171b32";
+    ctx.fillRect(x, y + 135, 240, 18);
+    ctx.fillStyle = "#f8dfb7";
+    ctx.font = "12px Georgia";
+    ctx.fillText(label, x + 7, y + 148, 226);
+  };
+  const roomsSheet = create(12, 12);
+  const menuSheet = create(4, 3);
+  const encode = (sheet) => sheet.toDataURL("image/webp", 0.88).split(",")[1];
+  try {
+    S = blank();
+    S.items = toolsList.map((_, i) => i);
+    S.slots = [0, 5];
+    noticeTime = 0;
+    for (let d = 0; d < names.length; d++)
+      for (let room = 0; room < rooms.length; room++) {
+        S.d = d;
+        S.r = room;
+        S.world = d >= 4 ? 1 : 0;
+        S.area = sites[d];
+        newRoom(190, 158);
+        mode = "play";
+        p.inv = 0;
+        draw(
+          roomsSheet,
+          12,
+          d * 12 + room,
+          room === 0 ? names[d] : rooms[room],
+        );
+      }
+    S.d = -1;
+    S.r = 0;
+    S.cave = "trial";
+    for (let world = 0; world < 2; world++)
+      for (let area = 0; area < 12; area++) {
+        S.world = world;
+        S.area = area;
+        newRoom(190, 158);
+        p.inv = 0;
+        draw(
+          roomsSheet,
+          12,
+          120 + world * 12 + area,
+          caveName() + " · " + (world ? gloam : places)[area],
+        );
+      }
+    S.cave = "";
+    S.world = 0;
+    S.area = 5;
+    S.bells = [5, 1, 3, 7, 9, 12, 15, 17, 19, 21, 23];
+    newRoom(192, 153);
+    p.inv = 0;
+    mode = "title";
+    sel = 0;
+    draw(menuSheet, 4, 0, "Title screen");
+    const menus = [
+      "pause",
+      "inventory",
+      "map",
+      "journal",
+      "bindings",
+      "bells",
+      "confirm",
+    ];
+    for (const [i, name] of menus.entries()) {
+      mode = name === "confirm" ? "title" : "play";
+      openMenu(name);
+      if (name === "inventory") sel = 6;
+      if (name === "bells") sel = 8;
+      draw(menuSheet, 4, i + 1, menuHeadings[name]);
+    }
+    mode = "defeat";
+    draw(menuSheet, 4, 8, "Defeat");
+    mode = "ending";
+    draw(menuSheet, 4, 9, "Ending");
+    say(
+      "Merin, the bellwarden",
+      "Rowan, Ione rang the west bell three nights ago. Her lantern came back alone.",
+    );
+    dialog.age = 99;
+    draw(menuSheet, 4, 10, "Dialogue");
+    mode = "play";
+    S.done = [0, 1, 2, 3];
+    S.seen = [...Array(24).keys()];
+    openMenu("map");
+    mapWorld = 1;
+    draw(menuSheet, 4, 11, "Gloam map");
+    return {
+      "room-gallery": encode(roomsSheet),
+      "menu-gallery": encode(menuSheet),
+    };
+  } finally {
+    S = save;
+    newRoom(...position);
+    ({ mode, menu, menuFrom, sel, page, mapWorld, dialog, noticeTime } = state);
+  }
 }
 async function verifyArtwork() {
   let previous = structuredClone(S),

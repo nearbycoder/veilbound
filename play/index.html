@@ -482,6 +482,7 @@
         }
       }
     </style>
+    <link rel="stylesheet" href="./menu.css" />
   </head>
   <body>
     <main>
@@ -690,6 +691,7 @@
       </footer>
     </dialog>
     <input hidden id="loadfile" type="file" accept=".json,application/json" />
+    <script src="./presentation.js"></script>
     <script>
       "use strict";
       const cv = document.querySelector("canvas"),
@@ -701,6 +703,14 @@
         village: new Image(),
         "village-ground": new Image(),
         "moonlit-valley": new Image(),
+        "world-surfaces": new Image(),
+        "chamber-surfaces": new Image(),
+        "region-props": new Image(),
+        "sanctum-props": new Image(),
+        interface: new Image(),
+        guardians: new Image(),
+        instruments: new Image(),
+        "last-bell": new Image(),
       };
       const villageSprites = {
         arch: [
@@ -7024,7 +7034,7 @@
           oval(m.x, m.y, 7, 3, "#766d5d");
           for (let i = 0; i < 3; i++)
             rect(m.x - 5 + i * 4, m.y - (i % 2) * 2, 2, 1, "#c5cdac");
-        } else {
+        } else if (!paintedGuardian(m, y, face, pose, phase)) {
           stamp(
             [
               "enemy",
@@ -7111,7 +7121,8 @@
       }
       function glyph(x, y, i, s = 1) {
         if (i < 0 || i > 10) return;
-        stamp("instrument" + i, x, y, s, 1, () => itemModel(i));
+        if (!instrumentArt(i, x, y, 15.2 * s))
+          stamp("instrument" + i, x, y, s, 1, () => itemModel(i));
       }
       function barrel(m, x, y, z, r = 3.4, h = 8, mat = "bark") {
         let ring = [
@@ -7805,6 +7816,15 @@
           villageSprite("stand", o.x, o.y, S.world)
         )
           return;
+        if (S.d < 0 && !S.cave && !inVillage()) {
+          const lead = setDress[S.area][0];
+          if (
+            o.x === lead[1] &&
+            o.y === lead[2] &&
+            regionLandmark(o.x, o.y, 44)
+          )
+            return;
+        }
         stamp("scene/" + kind + "/" + S.world, o.x, o.y, 1, 1, () =>
           fieldDressing(kind, !!S.world),
         );
@@ -10646,34 +10666,15 @@
           );
         });
       }
-      const villageMaterials = [[], []];
       function fillVillageMaterial(world, material, width, height) {
-        const cell = 384;
-        let tile = villageMaterials[world][material];
-        if (!tile) {
-          tile = document.createElement("canvas");
-          tile.width = tile.height = cell;
-          tile
-            .getContext("2d")
-            .drawImage(
-              paintedArt["village-ground"],
-              material * cell,
-              world * cell,
-              cell,
-              cell,
-              0,
-              0,
-              cell,
-              cell,
-            );
-          villageMaterials[world][material] = tile;
-        }
-        const pattern = g.createPattern(tile, "repeat");
-        pattern.setTransform(
-          new DOMMatrix().scale(width / cell, height / cell),
+        materialFill(
+          paintedArt["village-ground"],
+          3,
+          world * 3 + material,
+          384,
+          width,
+          height,
         );
-        g.fillStyle = pattern;
-        g.fillRect(0, 0, W, H);
       }
       function paintVillageGround(world, roadImage) {
         fillVillageMaterial(world, 0, 103, 91);
@@ -10710,6 +10711,7 @@
           paintVillageGround(dark, roadImage);
           return;
         }
+        if (area !== 5 && paintRegionFloor(area, dark, roadImage)) return;
         const seed = area * 23 + 517,
           surface = colorRamp(
             (dark ? shadowPalettes : fieldPalettes)[area],
@@ -11584,7 +11586,10 @@
           borderGroves(a, w);
           regionDetail(a, w, r);
           if (a === 5) villageDressing(w);
-          else otherLandscapeDetails(a, w);
+          else {
+            otherLandscapeDetails(a, w);
+            decorateRegion(r);
+          }
         }
         biomeCraft(a, w, r);
         if (a === 7) castle(342, 62, 0.8);
@@ -12386,6 +12391,17 @@
         }
       }
       function tree(x, y, dark, seed, size = 1, moving = false) {
+        if (
+          moving &&
+          S.d < 0 &&
+          !S.cave &&
+          [0, 1, 3, 8, 10, 11].includes(S.area) &&
+          artReady(paintedArt["region-props"])
+        ) {
+          groundShadow(x, y, 8 * size, 2.4);
+          regionLandmark(x, y, 38 * size, seed % 2 ? -1 : 1);
+          return;
+        }
         const id = ((seed % 19) + 19) % 19,
           style = dark
             ? id % 3
@@ -13619,6 +13635,7 @@
         for (let x = 9; x < W - 15; x += 12.13)
           stoneCourse(x, 198.3, 11.5, 6.17, aux, Math.round(x) + seed);
         rect(8, 204, W - 16, 2, "#111423b5");
+        rect(0, 209, W, H - 209, "#14172a");
         if (cave) {
           for (let j = 0; j < 19; j++) {
             let x = (j - 1) * 22 + r() * 6;
@@ -13638,7 +13655,8 @@
           d = cave ? S.area % 10 : S.d,
           room = S.r,
           tint = chamberLight[d];
-        flagstones(d, cave);
+        if (!paintChamberFloor(d, cave)) flagstones(d, cave);
+        paintChamberInlays(d, cave, room);
         if (!cave) floorRelief(d, room);
         chamberWalls(d, cave);
         for (const [x, y] of [
@@ -13676,6 +13694,7 @@
             }
           dungeonSet(d);
         }
+        dressChamber(d, cave, room);
         const dusk = g.createRadialGradient(192, 123, 55, 192, 123, 205);
         dusk.addColorStop(0, "#06102100");
         dusk.addColorStop(0.68, "#11192819");
@@ -14053,19 +14072,20 @@
             portalModel(x, y, o.id);
             break;
           case "cave":
-            if (inVillage() && villageSprite("cave", x, y, w)) break;
+            if (S.d < 0 && !S.cave && villageSprite("cave", x, y, w)) break;
             caveArch(x, y);
             break;
           case "bell":
-            if (inVillage() && artReady(paintedArt.village)) {
-              groundShadow(x, y, 22, 5);
-              villageSprite("arch", x, y, w);
+            if (artReady(paintedArt.village)) {
+              const size = inVillage() ? 1 : 0.74;
+              groundShadow(x, y, 22 * size, 5 * size);
+              villageSprite("arch", x, y, w, size);
               break;
             }
             towerBell(x, y, !!w);
             break;
           case "rift": {
-            if (!inVillage() || !villageSprite("rift", x, y, w))
+            if (!villageSprite("rift", x, y, w))
               stamp("prop/rift", x, y, 1, 1, () => propModel("rift"));
             for (let i = 0; i < 5; i++)
               rect(
@@ -14628,9 +14648,9 @@
         rect(X - 5, Y + 2.66, 10, 0.76, "#ffe2a3");
         line(57, 39, 97, 39, "#baa16e");
         petalGlyph(102, 39, 2.41, "#e3c082");
-        txt("Veilbound", 22, 85, "#11192a", 40, "left", "Georgia");
-        txt("Veilbound", 21, 84.1, "#735746", 40, "left", "Georgia");
-        g.font = "40px Georgia";
+        txt("Veilbound", 22, 85, "#11192a", 45, "left", menuDisplay);
+        txt("Veilbound", 21, 84.1, "#735746", 45, "left", menuDisplay);
+        g.font = "45px " + menuDisplay;
         const amber = g.createLinearGradient(0, 53, 0, 85);
         for (const [t, col] of [
           [0, "#fff3c7"],
@@ -14648,25 +14668,16 @@
         let labelsT = saved
           ? ["Continue journey", "New journey", "Settings"]
           : ["Begin journey", "Settings"];
-        labelsT.forEach((s, i) => {
-          let y = 121 + i * 20,
-            active = i === sel;
-          if (active) {
-            rect(25, y, 108, 16, "#d9b77e");
-            rect(26, y + 1, 106, 14, "#dfc18f");
-            txt("◆", 32, y + 11, "#6b5138", 7);
-          } else rect(25, y, 108, 16, "#112322ba");
-          txt(
-            s,
-            43,
-            y + 11,
-            active ? "#2e352c" : "#e6d7b4",
-            8,
-            "left",
-            "Georgia",
+        labelsT.forEach((label, i) => {
+          menuButton(
+            label,
+            25,
+            121 + i * 20,
+            128,
+            () => titleChoose(i),
+            i === sel,
+            16,
           );
-          if (active) txt("›", 124, y + 12, "#715a3e", 10, "center");
-          hitBox(25, y, 108, 16, () => titleChoose(i));
         });
         rect(0, 195, W, 21, "#151a32");
         rect(0, 195, W, 1, "#85734c");
@@ -14844,6 +14855,7 @@
         e.target.value = "";
       };
       function mapArt() {
+        artPanel(1, 28, 51, 327, 103, 172, 0.19);
         let indoor = S.d >= 0,
           ox = 74,
           oy = indoor ? 59 : 64,
@@ -14853,10 +14865,10 @@
           indoor ? names[S.d] : mapWorld ? "The Gloam" : "Aurelia",
           37,
           49,
-          "#f1e1bd",
-          10,
+          uiGold,
+          9.5,
           "left",
-          "Georgia",
+          menuDisplay,
         );
         if (!indoor) {
           for (let i = 0; i < 12; i++) {
@@ -14866,6 +14878,24 @@
             g.save();
             g.globalAlpha = known ? 0.78 : 0.24;
             let col = (mapWorld ? shadowPalettes : fieldPalettes)[i];
+            const sheet = paintedArt["world-surfaces"];
+            if (artReady(sheet)) {
+              const cell = i + mapWorld * 12;
+              g.drawImage(
+                sheet,
+                (cell % 6) * tileSize,
+                Math.floor(cell / 6) * tileSize,
+                tileSize,
+                tileSize,
+                X - 33,
+                Y - 8,
+                66,
+                26,
+              );
+              rect(X - 33, Y - 8, 66, 26, mapWorld ? "#21192f49" : "#342d2471");
+              g.restore();
+              continue;
+            }
             rect(X - 33, Y - 9, 66, 27, "#" + col[0]);
             rect(X - 32, Y - 8, 64, 25, "#" + col[1] + "50");
             for (let j = 0; j < 6; j++) {
@@ -14922,7 +14952,7 @@
               oy + arr[a][1] * sy,
               ox + arr[b][0] * sx,
               oy + arr[b][1] * sy,
-              "#817756",
+              "#c4a681",
             );
           }
         } else
@@ -14934,7 +14964,7 @@
                 oy + y * sy,
                 ox + (x + 1) * sx,
                 oy + y * sy,
-                "#556b60",
+                "#c6a67789",
               );
             if (y < 2)
               line(
@@ -14942,7 +14972,7 @@
                 oy + y * sy,
                 ox + x * sx,
                 oy + (y + 1) * sy,
-                "#556b60",
+                "#c6a67789",
               );
           }
         arr.forEach(([x, y], i) => {
@@ -14958,19 +14988,29 @@
             Y - 6,
             45,
             13,
-            here ? "#c9b47f" : show ? "#527060" : "#344448",
+            here ? "#e8c391" : show ? "#9f8b78" : "#52475e",
           );
-          txt(
-            show
-              ? indoor
-                ? rooms[i].slice(0, 12)
-                : (mapWorld ? gloam : places)[i].split(" ")[0]
-              : "·",
-            X,
-            Y + 2,
-            here ? "#233630" : "#e2d7bb",
-            5.5,
-            "center",
+          rect(
+            X - 21.4,
+            Y - 5.4,
+            43.8,
+            11.8,
+            here ? "#bd965d" : show ? "#2e293f" : "#211e31",
+          );
+          const label = indoor
+            ? rooms[i]
+            : (mapWorld ? gloam : places)[i].replace(/^The /, "");
+          const lines = show ? wrap(label, 14) : ["·"];
+          lines.forEach((part, j) =>
+            txt(
+              part,
+              X,
+              Y + (lines.length > 1 ? -0.8 + j * 6.4 : 2.7),
+              here ? "#292035" : uiPaper,
+              lines.length > 1 ? 6.15 : 7,
+              "center",
+              menuDisplay,
+            ),
           );
           if (indoor && i === 11 && S.done.includes(S.d))
             txt("✓", X + 22, Y, "#b4e5a0", 7);
@@ -14996,14 +15036,14 @@
           }
         });
         if (!indoor) {
-          button(
+          menuButton(
             mapWorld ? "View Aurelia" : "View The Gloam",
             37,
             161,
             85,
             () => (mapWorld = 1 - mapWorld),
           );
-          button("Mark current area", 129, 161, 91, () => {
+          menuButton("Mark current area", 129, 161, 91, () => {
             S.notes[loc()] = !S.notes[loc()];
             save();
           });
@@ -15014,152 +15054,9 @@
             : "◆ Entrance     ♪ Bell     + Note     Arrows switch worlds",
           37,
           185,
-          "#baa984",
-          6,
+          uiMuted,
+          6.3,
         );
-      }
-      function menuArt() {
-        if (menuFrom === "title") {
-          if (!titleCache) titleCache = makeLayer(landscape);
-          g.drawImage(titleCache, 0, 0, W, H);
-        } else drawScene();
-        rect(0, 0, W, H, "#0c151bc9");
-        frame(23, 14, 338, 188);
-        let heading = {
-          pause: "Journey paused",
-          inventory: "Equipment",
-          map: "Cartographer’s map",
-          journal: "Quest journal",
-          bindings: "Keyboard bindings",
-          bells: "Bell towers",
-          confirm: "New journey",
-        }[menu];
-        txt(heading, 36, 34, "#f8e9c6", 13, "left", "Georgia");
-        txt("×", 346, 32, "#d8bd88", 12, "center");
-        hitBox(334, 17, 22, 21, closeMenu);
-        line(36, 39, 347, 39, "#70684e");
-        if (menu === "map") {
-          mapArt();
-          return;
-        }
-        if (menu === "journal") {
-          let all = [
-            goal(),
-            ...names.map((n, i) => (S.done.includes(i) ? "✓ " : "◇ ") + n),
-            ...S.journal.slice().reverse(),
-          ];
-          let lines = all.flatMap((s) => wrap(s, 73));
-          lines
-            .slice(page * 13, page * 13 + 13)
-            .forEach((s, i) =>
-              txt(s, 38, 53 + i * 9, i === 0 ? "#e9c785" : "#cbd1be", 6.5),
-            );
-          button(
-            "‹ Previous",
-            38,
-            177,
-            62,
-            () => (page = Math.max(0, page - 1)),
-          );
-          button(
-            "Next ›",
-            105,
-            177,
-            55,
-            () => (page = Math.min(Math.ceil(lines.length / 13) - 1, page + 1)),
-          );
-          return;
-        }
-        let list = entries();
-        if (menu === "inventory") {
-          if (!list.length)
-            txt(
-              "The treasury instruments you find will appear here.",
-              38,
-              61,
-              "#cec9af",
-              7,
-            );
-          list.forEach((s, i) => {
-            let col = i % 6,
-              row = Math.floor(i / 6),
-              x = 37 + col * 51,
-              y = 47 + row * 32;
-            rect(x, y, 45, 27, sel === i ? "#a68e62" : "#334744");
-            rect(x + 1, y + 1, 43, 25, sel === i ? "#536859" : "#283a39");
-            glyph(x + 22, y + 13, S.items[i], 1.3);
-            let k = S.slots.indexOf(S.items[i]);
-            if (k >= 0)
-              txt(keyName(k ? "slot2" : "slot1"), x + 3, y + 8, "#ebcb8b", 6);
-            hitBox(x, y, 45, 27, () => (sel = i));
-          });
-          let id = S.items[sel];
-          if (id !== undefined) {
-            txt(toolsList[id], 38, 125, "#f1d7a4", 12, "left", "Georgia");
-            wrap(descriptions[id], 68).forEach((s, i) =>
-              txt(s, 38, 138 + i * 9, "#cbd4c1", 7),
-            );
-            button("Equip " + keyName("slot1"), 38, 157, 65, () =>
-              menuChoose(sel),
-            );
-            button("Equip " + keyName("slot2"), 110, 157, 65, () =>
-              menuChoose(sel, -1),
-            );
-          }
-          button("Quest journal", 244, 179, 99, () => openMenu("journal"));
-          return;
-        }
-        let cols = menu === "bindings" ? 2 : 1,
-          rows = cols === 2 ? 7 : 10;
-        list.forEach((s, i) => {
-          let col = Math.floor(i / rows),
-            row = i % rows;
-          button(
-            s,
-            38 + col * 151,
-            46 + row * 15,
-            cols === 2 ? 141 : menu === "pause" ? 129 : 194,
-            () => {
-              sel = i;
-              menuChoose(i);
-            },
-            sel === i,
-          );
-        });
-        if (menu === "pause") {
-          let x = 190;
-          spaced("CURRENT OBJECTIVE", x, 57, 0.7, "#d3b57e", 6);
-          wrap(goal(), 32).forEach((s, i) =>
-            txt(s, x, 72 + i * 10, "#e5dcc3", 7),
-          );
-          txt(
-            S.done.filter((i) => i < 4).length + " / 4 seals",
-            x,
-            121,
-            "#a4cab4",
-            7,
-          );
-          txt(
-            S.done.filter((i) => i >= 4).length + " / 6 fragments",
-            x,
-            134,
-            "#c5acc8",
-            7,
-          );
-          if (S.end) txt("Crown dismantled", x, 149, "#eac886", 7);
-        }
-        if (menu === "bindings")
-          txt(
-            bindAction
-              ? "Press a new key for " + bindAction
-              : "Select an action and press a key.",
-            38,
-            176,
-            "#ddc38b",
-            7,
-          );
-        if (menu === "confirm")
-          txt("A new journey replaces the local save.", 38, 98, "#e8b2a0", 7);
       }
       function dialogueArt() {
         if (scene.obj) drawScene();
@@ -15179,44 +15076,54 @@
           }
           glyph(192, y - 6, S.d, 1.7);
         }
-        frame(16, 151, 352, 57);
+        const shade = g.createLinearGradient(0, 121, 0, 216);
+        shade.addColorStop(0, "#11112300");
+        shade.addColorStop(1, "#0c1023c6");
+        rect(0, 121, W, H - 121, shade);
+        frame(16, 150, 352, 59);
         let portrait = portraitId(dialog.w),
           left = portrait < 0 ? 27 : 63;
         if (portrait >= 0) speakerPortrait(portrait, 23, 159);
-        txt(dialog.w, left, 166, "#e6bf80", 9, "left", "Georgia");
+        txt(dialog.w, left, 165, uiGold, 10.2, "left", menuDisplay);
+        rect(left, 169, 333 - left, 0.48, uiRule);
         let s = dialog.s.slice(
           0,
           opts.fast ? 999 : Math.floor(dialog.age * 3) + 5,
         );
         wrap(s, portrait < 0 ? 76 : 67).forEach((line, i) =>
-          txt(line, left, 178 + i * 9, "#f0e9cf", 7),
+          txt(line, left, 180 + i * 8.7, uiPaper, 8, "left", menuDisplay),
         );
         txt("›", 356, 202, "#e0bd7b", 10, "right");
       }
       function endingArt() {
-        if (!titleCache) titleCache = makeLayer(landscape);
-        g.drawImage(titleCache, 0, 0, W, H);
-        rect(0, 0, W, H, "#16292472");
-        frame(35, 39, 314, 139);
-        stamp("ending-ione", 310, 161, 1.7, 1, mentorModel);
-        spaced("THE LAST BELL", 53, 58, 1.7, "#d6b578", 6);
-        txt("Two dawns, one song", 52, 82, "#f5e3bc", 19, "left", "Georgia");
-        let n = S.quests.filter((x) => x === 3).length,
-          s =
-            "Ione lowers the lantern. Across the divide, the bells answer one another. " +
-            (n
-              ? "The " + n + " neighbours you helped carry the melody home."
-              : "In Bellwick, a single lamp waits in the window.") +
-            " Rowan takes the morning watch.";
-        wrap(s, 60).forEach((s, i) => txt(s, 53, 101 + i * 10, "#e4dcc6", 7));
-        button(
-          "Explore · pre-finale checkpoint",
-          53,
-          151,
-          184,
-          () => retry(),
-          true,
+        const dawn = paintedArt["last-bell"];
+        if (artReady(dawn)) g.drawImage(dawn, 0, 0, W, H);
+        else {
+          if (!titleCache) titleCache = makeLayer(landscape);
+          g.drawImage(titleCache, 0, 0, W, H);
+          stamp("ending-ione", 310, 161, 1.7, 1, mentorModel);
+        }
+        const shade = g.createLinearGradient(0, 0, 279, 0);
+        shade.addColorStop(0, "#121325ef");
+        shade.addColorStop(0.64, "#15182caa");
+        shade.addColorStop(1, "#15182c00");
+        rect(0, 0, W, H, shade);
+        spaced("THE LAST BELL", 31, 47, 1.34, uiGold, 6.2);
+        txt("Two dawns, one song", 30, 75, uiPaper, 22, "left", menuDisplay);
+        menuRule(28, 85, 178);
+        const neighbours = S.quests.filter((q) => q === 3).length;
+        const s =
+          "Ione lowers the lantern. Across the divide, the bells answer one another. " +
+          (neighbours
+            ? "The " +
+              neighbours +
+              " neighbours you helped carry the melody home."
+            : "In Bellwick, a single lamp waits in the window.") +
+          " Rowan takes the morning watch.";
+        wrap(s, 51).forEach((line, i) =>
+          txt(line, 32, 101 + i * 10, uiPaper, 8.6, "left", menuDisplay),
         );
+        menuButton("Explore before the finale", 32, 161, 155, retry, true, 18);
       }
       function step() {
         tick++;
@@ -15259,16 +15166,7 @@
             }
           } else if (menu === "journal") {
             if (pressed.has("down") || pressed.has("right"))
-              page = Math.min(
-                page + 1,
-                Math.max(
-                  0,
-                  Math.ceil(
-                    [goal(), ...names, ...S.journal].flatMap((s) => wrap(s, 73))
-                      .length / 13,
-                  ) - 1,
-                ),
-              );
+              page = Math.min(page + 1, journalPageCount() - 1);
             if (pressed.has("up") || pressed.has("left"))
               page = Math.max(0, page - 1);
           } else {
@@ -15306,25 +15204,12 @@
         }
         if (preferences.open) preferences.close();
         if (mode === "title") title();
-        else if (mode === "menu") menuArt();
+        else if (mode === "menu") paintGameMenu();
         else if (mode === "talk") dialogueArt();
         else if (mode === "ending") endingArt();
         else {
           drawScene();
-          if (mode === "defeat") {
-            rect(0, 0, W, H, "#24202aca");
-            frame(83, 75, 218, 66);
-            txt(
-              "The lantern gutters",
-              192,
-              98,
-              "#f2d5af",
-              14,
-              "center",
-              "Georgia",
-            );
-            button("Return to checkpoint", 122, 112, 140, retry, true);
-          }
+          if (mode === "defeat") paintDefeat();
         }
       }
       let prev = performance.now(),
@@ -15465,6 +15350,8 @@
         }
         groundShadow(100, 177, 29, 5, 4);
         stamp("preferences/gate", 100, 177, 1.85, 1, () => entranceSculpt(0));
+        paintedCutout("sanctum-props", 0, 5, 51, 192, 47, -1);
+        paintedCutout("sanctum-props", 0, 5, 206, 196, 44);
         rock(69, 179, 0.87, false);
         rock(129, 179, 0.53, false);
         for (let i = 0; i < 17; i++) {
@@ -15715,6 +15602,7 @@
       applyGraphics();
       applyBrightness();
       loadPaintedArt();
+      document.fonts.load("18px Veil Serif").catch(() => {});
       if (new URLSearchParams(location.search).get("launch") === "1") {
         // A damaged save still gets the title screen and its explicit New Journey option.
         if (saved) start(true);

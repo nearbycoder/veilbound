@@ -18,13 +18,15 @@ For offline play, open [play/index.html](play/index.html) in a browser and choos
 
 Pause to open the quest journal, adjust controls, or export a save. Bell towers restore supplies and link discovered destinations.
 
-The game renders in Canvas 2D. Rowan’s animation sprites and the paired Bellwick and Hushwick scenery were generated from the same village illustration. The game assembles the village from individual props and repeating ground tiles, with a depth pass for characters and buildings. The [art pack](play/art/README.md) documents the sprite sheets and generation prompts. Other regions, the guardians, and equipment use cached code-drawn artwork. The [model gallery](verification/model-gallery.png) shows the cast and equipment at a larger scale. The [environment gallery](verification/environment-gallery.png) pairs each region of Aurelia with its counterpart in the Gloam.
+The game renders in Canvas 2D. Painted textures follow the actual roads and dungeon layouts. Each of the 24 overworld areas has its own palette and landmark art, and each dungeon combines its materials and guardian with lighting and decoration keyed to the room’s purpose. Rowan, the village cast, guardians, and instruments use painted sprites. The [art pack](play/art/README.md) documents the atlases and generation prompts.
+
+The [overworld gallery](verification/environment-gallery.png) pairs each region of Aurelia with its Gloam counterpart. The [room gallery](verification/room-gallery.webp) shows all 120 dungeon rooms and 24 cave variants. The [menu gallery](verification/menu-gallery.webp) and [settings capture](verification/settings.png) show the redesigned interface.
 
 Run `node verification/check.mjs` with Node 22+ and Chrome installed to play through the campaign headlessly, run the interaction, artwork, and audio checks, and regenerate the captures and [verification results](verification/results.json). Set `CHROME_PATH` to select a different Chrome executable.
 
 GitHub Pages publishes the repository root from `main`. The marketing site lives in [index.html](index.html), and its Play links open the standalone game in [play/](play/).
 
-The homepage opens on the game's moonlit bell scene. Its Play command starts a new journey or resumes a valid local save. The gameplay gallery shows Bellwick and Hushwick from the same viewpoint and features two dungeon chambers. The journal pairs all twelve regions of Aurelia with their Gloam counterparts and shows every instrument from the game renderer.
+The homepage opens on the game’s moonlit bell scene. Its Play command starts a new journey or resumes a valid local save. The realm slider compares the same view of Bellwick and Hushwick, and the gameplay reel tours two overworld areas and two heart chambers. The journal pairs all twelve regions of Aurelia with their Gloam counterparts and shows the instruments from the game renderer.
 
 <details>
 <summary>Earlier promotional artwork</summary>

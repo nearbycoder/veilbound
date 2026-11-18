@@ -105,7 +105,7 @@ dialog.addEventListener("close", () => {
   reelTrigger?.focus({ preventScroll: true });
 });
 
-const artworkRevision = "?v=painted-sprites";
+const artworkRevision = "?v=hollow-crown";
 const realmNames = ["Aurelia", "The Gloam"];
 const notes = [
   [
@@ -334,3 +334,29 @@ bell.addEventListener("click", async () => {
     /* The visible bell response also works with audio unavailable. */
   }
 });
+
+const reveal = document.getElementById("veil-reveal");
+const veil = document.getElementById("veil-comparison");
+const realmButtons = [...document.querySelectorAll("[data-reveal]")];
+function updateVeil() {
+  const value = Number(reveal.value);
+  veil.style.setProperty("--reveal", 100 - value + "%");
+  veil.toggleAttribute("data-endpoint", value === 0 || value === 100);
+  reveal.setAttribute(
+    "aria-valuetext",
+    value === 0 ? "Aurelia" : value === 100 ? "The Gloam" : value + "% Gloam",
+  );
+  for (const button of realmButtons)
+    button.setAttribute(
+      "aria-pressed",
+      String(Number(button.dataset.reveal) === value),
+    );
+}
+reveal.addEventListener("input", updateVeil);
+for (const button of realmButtons)
+  button.addEventListener("click", () => {
+    reveal.value = button.dataset.reveal;
+    updateVeil();
+  });
+document.querySelector(".veil-controls").hidden = false;
+updateVeil();
