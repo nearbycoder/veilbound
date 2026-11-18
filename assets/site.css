@@ -1000,8 +1000,8 @@ footer a:not(.brand) {
 }
 .resonance {
   position: absolute;
-  left: 84%;
-  top: 70%;
+  left: 85%;
+  top: 66%;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -1031,13 +1031,13 @@ footer a:not(.brand) {
 }
 @media (max-width: 850px) {
   .resonance {
-    left: 80%;
-    top: 61%;
+    left: 82%;
+    top: 58%;
   }
 }
 @media (max-width: 650px) {
   .resonance {
-    left: 69%;
+    left: 73%;
     top: 47%;
   }
   .journal-intro {

@@ -105,7 +105,7 @@ dialog.addEventListener("close", () => {
   reelTrigger?.focus({ preventScroll: true });
 });
 
-const artworkRevision = "?v=0610692";
+const artworkRevision = "?v=painted-sprites";
 const realmNames = ["Aurelia", "The Gloam"];
 const notes = [
   [

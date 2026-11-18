@@ -18,6 +18,8 @@ const chrome = spawn(
   [
     "--headless=new",
     "--disable-gpu",
+    // Canvas captures read back the game's bundled images while testing file:// play.
+    "--allow-file-access-from-files",
     "--mute-audio",
     "--remote-debugging-port=0",
     "--user-data-dir=" + profile,
@@ -83,11 +85,19 @@ try {
   await call("Page.navigate", {
     url: pathToFileURL(path.join(project, "play", "index.html")).href,
   });
-  for (let i = 0; i < 30; i++) {
-    await new Promise((r) => setTimeout(r, 60));
-    if (await ev("document.readyState==='complete'&&typeof paint==='function'"))
-      break;
+  async function waitForGame() {
+    for (let i = 0; i < 60; i++) {
+      await delay(50);
+      if (
+        await ev(
+          'document.readyState === "complete" && typeof paintedArt !== "undefined" && Object.values(paintedArt).every(artReady)',
+        )
+      )
+        return;
+    }
+    throw Error("The game or a painted sprite sheet failed to load");
   }
+  await waitForGame();
   async function checkPreferences() {
     const results = [];
     const assert = (pass, message) => {
@@ -131,16 +141,7 @@ try {
     }
     async function reload() {
       await call("Page.reload");
-      for (let i = 0; i < 60; i++) {
-        await delay(35);
-        if (
-          await ev(
-            'document.readyState==="complete"&&typeof graphics!=="undefined"&&typeof preferences!=="undefined"',
-          )
-        )
-          return;
-      }
-      throw Error("Preferences reload failed");
+      await waitForGame();
     }
     await metrics(1120, 700);
     assert(
@@ -162,13 +163,13 @@ try {
     );
     await click("[name=quality][value=classic]");
     const classic = await ev(
-      'paint();({w:cv.width,h:cv.height,room:titleCache.width,tile:actorAtlas.get("preferences/rowan").tile.width,preview:document.querySelector("#pref-art").width})',
+      'paint();({w:cv.width,h:cv.height,room:titleCache.width,tile:actorAtlas.get("preferences/gate").tile.width,preview:document.querySelector("#pref-art").width})',
     );
     await click("[name=quality][value=balanced]");
     const balanced = await ev("paint();[cv.width,cv.height]");
     await click("[name=quality][value=high]");
     const high = await ev(
-      'paint();[titleCache.width,actorAtlas.get("preferences/rowan").tile.width,document.querySelector("#pref-art").width]',
+      'paint();[titleCache.width,actorAtlas.get("preferences/gate").tile.width,document.querySelector("#pref-art").width]',
     );
     assert(
       classic.w === 384 &&
@@ -1442,6 +1443,34 @@ async function verifyArtwork() {
         sprite("right", () => rowanModel("side", 2, "attack", true, 1)),
       "Left and right sword poses render independently",
     );
+    function paintedPose(view, stance, phase, facing = 1, restored = false) {
+      return makeLayer(
+        () => {
+          if (!paintedRowan(32, 30, 1, facing, view, stance, phase, restored))
+            throw Error("Painted Rowan fell back to the miniature");
+        },
+        64,
+        40,
+      ).toDataURL();
+    }
+    for (const view of ["front", "side", "back"]) {
+      const poses = [
+        paintedPose(view, "idle", 0),
+        paintedPose(view, "walk", 2),
+        paintedPose(view, "walk", 6),
+        paintedPose(view, "dodge", 0),
+        paintedPose(view, "shield", 0),
+        ...[0, 2, 4].map((phase) => paintedPose(view, "attack", phase)),
+      ];
+      if (new Set(poses).size !== poses.length)
+        throw Error("Missing painted pose for " + view);
+    }
+    ok(
+      paintedPose("side", "walk", 2, -1) !== paintedPose("side", "walk", 2) &&
+        paintedPose("side", "attack", 2, 1, true) !==
+          paintedPose("side", "attack", 2),
+      "Painted Rowan walks, dodges, guards and strikes in every direction with a distinct Dawnsteel blade",
+    );
     ok(
       sprite("closed", () => propModel("chest", false)) !==
         sprite("opened", () => propModel("chest", true)),
@@ -1491,6 +1520,16 @@ async function verifyArtwork() {
     ok(
       true,
       "Painted roads follow actual exits and water textures follow the water and riverbed geometry",
+    );
+    S.area = 5;
+    S.world = 0;
+    S.items = S.items.filter((item) => item !== 1);
+    newRoom(192, 149);
+    const bridge = scene.obj.find((o) => o.type === "bridge");
+    const bank = scene.water.find((water) => water.y === 208);
+    ok(
+      bridge && !solid(bridge.x, bridge.y) && solid(bank.x + 3, 208),
+      "The southwest brook can be crossed on its footbridge without River Boots",
     );
     // Sample the real mixer through an analyser. Chrome's speaker output is muted.
     async function sample(volume) {

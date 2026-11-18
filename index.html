@@ -21,7 +21,7 @@
     />
     <meta
       property="og:image"
-      content="https://nearbycoder.github.io/veilbound/assets/media/bellwick-share.jpg"
+      content="https://nearbycoder.github.io/veilbound/assets/media/bellwick-share.jpg?v=painted-sprites"
     />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="675" />
@@ -35,7 +35,7 @@
     />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./assets/site.css?v=painted-worlds" />
+    <link rel="stylesheet" href="./assets/site.css?v=painted-sprites" />
     <link
       rel="preload"
       href="./assets/type/cormorant-garamond-medium.ttf"
@@ -43,7 +43,7 @@
       type="font/ttf"
       crossorigin
     />
-    <script src="./assets/site.js?v=painted-worlds" defer></script>
+    <script src="./assets/site.js?v=painted-sprites" defer></script>
   </head>
   <body id="top">
     <a class="skip" href="#main">Skip to game menu</a>
@@ -67,10 +67,12 @@
         <picture
           ><source
             media="(max-width:650px)"
-            srcset="./assets/media/moonlit-bell-mobile.webp" />
+            srcset="
+              ./assets/media/moonlit-bell-mobile.webp?v=painted-sprites
+            " />
           <img
             class="backdrop"
-            src="./assets/media/moonlit-bell.webp"
+            src="./assets/media/moonlit-bell.webp?v=painted-sprites"
             width="1600"
             height="900"
             fetchpriority="high"
@@ -95,7 +97,7 @@
             <a
               id="watch"
               data-watch
-              href="./assets/media/gameplay.mp4?v=0610692"
+              href="./assets/media/gameplay.mp4?v=painted-sprites"
               ><span class="pointer" aria-hidden="true">▶</span> Watch
               gameplay</a
             >
@@ -109,7 +111,7 @@
       <div class="dialogue">
         <div class="dialogue-inner">
           <img
-            src="./assets/journal/merin.png?v=0610692"
+            src="./assets/journal/merin.png?v=painted-sprites"
             alt=""
             width="68"
             height="82"
@@ -136,7 +138,7 @@
           <a
             class="reel-link"
             data-watch
-            href="./assets/media/gameplay.mp4?v=0610692"
+            href="./assets/media/gameplay.mp4?v=painted-sprites"
           >
             <span aria-hidden="true">▶</span> Watch gameplay
           </a>
@@ -144,8 +146,8 @@
         <div class="capture-grid">
           <figure class="capture">
             <img
-              src="./assets/media/bellwick.webp"
-              alt="Rowan in the cobbled square beside Bellwick’s bell arch, teal-roofed cottages, and orchards."
+              src="./assets/media/bellwick.webp?v=painted-sprites"
+              alt="Rowan crosses Bellwick’s cobbled square between an engraved bell arch, apple trees, and a striped market stall."
               width="1200"
               height="675"
               loading="lazy"
@@ -156,8 +158,8 @@
           </figure>
           <figure class="capture">
             <img
-              src="./assets/media/hushwick.webp"
-              alt="The same square in Hushwick, with violet stone, twisted trees, and teal-lit windows."
+              src="./assets/media/hushwick.webp?v=painted-sprites"
+              alt="Rowan in the same square in Hushwick, with violet stone, wine-red trees, and cyan-lit mushrooms and windows."
               width="1200"
               height="675"
               loading="lazy"
@@ -168,7 +170,7 @@
           </figure>
           <figure class="capture">
             <img
-              src="./assets/media/drowned-choir.webp"
+              src="./assets/media/drowned-choir.webp?v=painted-sprites"
               alt="Rowan faces the exposed Abyssal Chorister among rippling floor emblems and blue torchlight."
               width="1200"
               height="675"
@@ -180,7 +182,7 @@
           </figure>
           <figure class="capture">
             <img
-              src="./assets/media/frostbound.webp"
+              src="./assets/media/frostbound.webp?v=painted-sprites"
               alt="The Pale Archivist stands in a chamber of ice, with a snowflake engraved in the floor."
               width="1200"
               height="675"
@@ -231,7 +233,7 @@
                 <img
                   id="land-art"
                   loading="lazy"
-                  src="./assets/journal/land-0-5.webp?v=0610692"
+                  src="./assets/journal/land-0-5.webp?v=painted-sprites"
                   width="620"
                   height="294"
                   alt="Bellwick Village in Aurelia."
@@ -369,14 +371,15 @@
         controls
         playsinline
         preload="none"
-        poster="./assets/media/bellwick.webp"
+        poster="./assets/media/bellwick.webp?v=painted-sprites"
         aria-label="Silent gameplay footage showing exploration and dungeon combat"
       >
-        <source src="./assets/media/gameplay.mp4?v=0610692" type="video/mp4" />
+        <source
+          src="./assets/media/gameplay.mp4?v=painted-sprites"
+          type="video/mp4"
+        />
       </video>
-      <p>
-        Bellwick Village · Glassmere Marsh · Drowned Choir · Ashen Hourworks
-      </p>
+      <p>Bellwick Village · Hushwick · Drowned Choir · Ashen Hourworks</p>
     </dialog>
   </body>
 </html>
