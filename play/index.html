@@ -12506,6 +12506,17 @@
       }
       applyGraphics();
       applyBrightness();
+      if (new URLSearchParams(location.search).get("launch") === "1") {
+        // A damaged save still gets the title screen and its explicit New Journey option.
+        if (saved) start(true);
+        else {
+          let existing = null;
+          try {
+            existing = localStorage.getItem(KEY);
+          } catch {}
+          if (existing === null) start(false);
+        }
+      }
       paint();
       requestAnimationFrame(loop);
     </script>

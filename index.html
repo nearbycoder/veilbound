@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="theme-color" content="#101a18" />
+    <meta name="theme-color" content="#101222" />
     <title>Veilbound — Echoes of the Hollow Crown</title>
     <meta
       name="description"
@@ -21,7 +21,7 @@
     />
     <meta
       property="og:image"
-      content="https://nearbycoder.github.io/veilbound/assets/media/cover.webp"
+      content="https://nearbycoder.github.io/veilbound/assets/journal/bell-tower.webp"
     />
     <meta
       property="og:url"
@@ -29,243 +29,258 @@
     />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./assets/site.css" />
+    <link rel="stylesheet" href="./assets/site.css?v=bell-tower" />
     <link
       rel="preload"
-      href="./assets/type/cormorant-garamond-medium.ttf"
+      href="./assets/type/Jacquard24-Regular.ttf"
       as="font"
       type="font/ttf"
       crossorigin
     />
-    <script src="./assets/site.js" defer></script>
+    <script src="./assets/site.js?v=bell-tower" defer></script>
   </head>
   <body id="top">
-    <a class="skip" href="#adventure">Skip to adventure</a>
-    <header class="mast">
-      <div class="shell nav-inner">
-        <a class="wordmark" href="#top" aria-label="Veilbound home"
+    <a class="skip" href="#main">Skip to game menu</a>
+    <header class="hud">
+      <div class="hud-inner">
+        <a href="#top" class="brand" aria-label="Veilbound home"
           ><img src="./assets/icon.svg" alt="" />Veilbound</a
         >
-        <nav aria-label="Main navigation">
-          <a href="#worlds">The worlds</a><a href="#guide">Field guide</a
+        <nav aria-label="Field journal">
+          <a href="#atlas">World atlas</a><a href="#satchel">Satchel</a
           ><a href="#controls">Controls</a>
         </nav>
-        <a class="nav-play" href="./play/index.html"
-          >Play now <span aria-hidden="true">↗</span></a
-        >
+        <button id="ring" type="button" hidden>
+          <span aria-hidden="true">♫</span>
+          <span class="bell-label">Ring the west bell</span>
+        </button>
       </div>
     </header>
-    <main id="adventure">
-      <section class="hero" aria-labelledby="game-title">
+    <main id="main">
+      <section class="title-screen" aria-labelledby="game-title">
         <picture
           ><source
-            media="(max-width: 650px)"
-            srcset="./assets/media/cover-mobile.webp" />
+            media="(max-width:650px)"
+            srcset="./assets/journal/bell-tower-mobile.webp" />
           <img
-            class="hero-image"
-            src="./assets/media/cover.webp"
-            alt=""
+            class="backdrop"
+            src="./assets/journal/bell-tower.webp"
             fetchpriority="high"
+            alt="Rowan holds Ione’s lantern beside a ruined bell tower above the lights of the valley."
         /></picture>
-        <div class="hero-veil"></div>
-        <div class="shell hero-inner">
-          <div class="hero-text">
-            <h1 id="game-title">Veilbound</h1>
-            <p class="subtitle"><i></i>Echoes of the Hollow Crown</p>
-            <p class="lede">
-              Take up your missing mentor’s lantern. Cross into the shadow of a
-              familiar kingdom in this top-down fantasy adventure.
-            </p>
-            <div class="actions">
-              <a class="gold-button" href="./play/index.html"
-                ><span class="triangle" aria-hidden="true"></span>Play in
-                browser</a
-              ><a class="watch" id="watch" href="./assets/media/gameplay.mp4"
-                ><span class="round-play" aria-hidden="true">▷</span>Watch
-                gameplay</a
-              >
-            </div>
-          </div>
+        <div class="resonance" aria-hidden="true"></div>
+        <div class="motes" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
         </div>
-        <a class="descend" href="#worlds" aria-label="Explore the worlds">↓</a>
+        <div class="screen-edge" aria-hidden="true"></div>
+        <div class="title-content">
+          <div class="title-lockup">
+            <div class="crown" aria-hidden="true"><i></i><b></b><i></i></div>
+            <h1 id="game-title">Veilbound</h1>
+            <p class="subtitle">Echoes of the Hollow Crown</p>
+          </div>
+          <nav class="game-menu" aria-label="Game menu">
+            <a class="launch" href="./play/index.html?launch=1"
+              ><span class="pointer" aria-hidden="true">▶</span> Play game
+              <small>↵</small></a
+            >
+            <a id="watch" href="./assets/media/gameplay.mp4"
+              ><span class="pointer" aria-hidden="true">▶</span> Watch
+              gameplay</a
+            >
+            <a href="#atlas"
+              ><span class="pointer" aria-hidden="true">▶</span> Open field
+              journal</a
+            >
+          </nav>
+        </div>
       </section>
-      <div class="facts">
-        <div class="shell facts-inner">
-          <p><b>2</b> intertwined worlds</p>
-          <p><b>10</b> dungeons</p>
-          <p><b>11</b> tools &amp; treasures</p>
+      <div class="dialogue">
+        <div class="dialogue-inner">
+          <img src="./assets/journal/merin.png" alt="" width="68" height="82" />
+          <div>
+            <p class="speaker">Merin <span>Bellwarden</span></p>
+            <p id="speech" aria-live="polite">
+              “Rowan, Ione rang the west bell three nights ago. Her lantern came
+              back alone.”
+            </p>
+          </div>
+          <button
+            id="advance"
+            aria-label="Next line of Merin’s dialogue"
+            hidden
+          >
+            ▼
+          </button>
         </div>
       </div>
-      <section id="worlds" class="worlds shell" aria-labelledby="world-title">
-        <div class="world-copy">
-          <p class="eyebrow">The worlds</p>
-          <h2 id="world-title">Beyond the veil.</h2>
-          <p>
-            Three nights ago, Ione rang the west bell. Her lantern came back
-            alone. Follow its light from Bellwick Village to the Gloam, where
-            even familiar roads lead somewhere strange.
-          </p>
-          <div class="world-switch" aria-label="Choose a world" hidden>
-            <button type="button" data-world="aurelia" aria-pressed="true">
-              Aurelia</button
-            ><button type="button" data-world="gloam" aria-pressed="false">
-              The Gloam
+      <section class="journal" aria-labelledby="journal-title">
+        <header class="journal-head">
+          <h2 id="journal-title">Rowan’s field journal</h2>
+          <span aria-hidden="true" class="rule"></span>
+        </header>
+        <p class="journal-intro">
+          Four dungeons lie in Aurelia. Six more wait beyond the veil. Chart
+          Rowan’s route and inspect the instruments that open each path.
+        </p>
+        <nav class="folios" aria-label="Journal pages">
+          <a href="#atlas" data-folio="atlas">World atlas</a
+          ><a href="#satchel" data-folio="satchel">Satchel</a
+          ><a href="#controls" data-folio="controls">Controls</a>
+        </nav>
+        <section class="paper" id="atlas" aria-labelledby="atlas-heading">
+          <div class="page-head">
+            <div>
+              <span class="kicker">Cartographer’s map</span>
+              <h3 id="atlas-heading">Aurelia</h3>
+            </div>
+            <button class="veil-switch" id="cross" hidden>
+              Cross to the Gloam <span aria-hidden="true">⇄</span>
             </button>
           </div>
-        </div>
-        <figure class="world-image">
-          <img
-            id="world-shot"
-            loading="lazy"
-            src="./assets/media/aurelia.jpg"
-            width="960"
-            height="540"
-            alt="Bellwick Village in Aurelia, with tiled cottages and a bell on the village green."
-          />
-          <figcaption aria-live="polite">
-            <span id="world-label">Bellwick Village</span
-            ><small>In-game capture</small>
-          </figcaption>
-        </figure>
-      </section>
-      <section class="guide" id="guide" aria-labelledby="guide-title">
-        <div class="shell">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">Field guide</p>
-              <h2 id="guide-title">Tools of the journey.</h2>
+          <div class="atlas-spread">
+            <div class="map-side">
+              <div
+                id="map-grid"
+                class="map-grid"
+                role="group"
+                aria-label="Choose a region"
+              ></div>
+              <p class="map-key">◆ Select a region to inspect it.</p>
             </div>
-            <p>
-              Each dungeon hides an instrument. Equip two at a time, learn what
-              they can change, and carry them back to places you’ve already
-              explored.
-            </p>
+            <figure class="region">
+              <div class="mat">
+                <img
+                  id="land-art"
+                  loading="lazy"
+                  src="./assets/journal/land-0-5.webp"
+                  width="620"
+                  height="294"
+                  alt="Bellwick Village in Aurelia."
+                />
+              </div>
+              <figcaption aria-live="polite">
+                <h4 id="land-title">Bellwick Village</h4>
+                <p id="land-note">
+                  Find Merin on the village green. Ring the bell to restore your
+                  supplies before setting out for Mossbell Sanctuary.
+                </p>
+              </figcaption>
+            </figure>
           </div>
-          <div class="instruments">
-            <article>
-              <div class="object">
-                <img
-                  loading="lazy"
-                  src="./assets/media/gale-disc.png"
-                  alt=""
-                  width="236"
-                  height="180"
-                />
-              </div>
-              <h3>Gale Disc</h3>
-              <p>
-                Throw a returning blade through vines or ring a distant switch
-                across a gap.
-              </p>
-            </article>
-            <article>
-              <div class="object">
-                <img
-                  loading="lazy"
-                  src="./assets/media/echo-chime.png"
-                  alt=""
-                  width="236"
-                  height="180"
-                />
-              </div>
-              <h3>Echo Chime</h3>
-              <p>
-                Sound the chime to reveal hidden stepping stones and silence the
-                singers of the Drowned Choir.
-              </p>
-            </article>
-            <article>
-              <div class="object">
-                <img
-                  loading="lazy"
-                  src="./assets/media/stillglass.png"
-                  alt=""
-                  width="236"
-                  height="180"
-                />
-              </div>
-              <h3>Stillglass</h3>
-              <p>
-                Halt marked gears and foes for four seconds. Slip through the
-                mechanism before time catches up.
-              </p>
-            </article>
-          </div>
-        </div>
-      </section>
-      <section
-        class="controls shell"
-        id="controls"
-        aria-labelledby="control-title"
-      >
-        <div>
-          <p class="eyebrow">How to play</p>
-          <h2 id="control-title">Your first steps.</h2>
-          <p>
-            Find Merin on the village green and collect the Burst Satchel. Ring
-            the bell to restore your supplies, then head northwest to Mossbell
-            Sanctuary.
-          </p>
-          <a class="gold-button" href="./play/index.html"
-            ><span class="triangle" aria-hidden="true"></span>Begin your
-            journey</a
+          <noscript
+            ><p>
+              Across the veil, Bellwick Village becomes Hushwick. Explore both
+              worlds in the game.
+            </p></noscript
           >
-        </div>
-        <div class="control-list">
-          <details open>
-            <summary>Keyboard controls</summary>
-            <dl>
-              <div>
-                <dt>Move</dt>
-                <dd>WASD / Arrow keys</dd>
-              </div>
-              <div>
-                <dt>Strike / Guard</dt>
-                <dd>J / Hold K</dd>
-              </div>
-              <div>
-                <dt>Dodge / Interact</dt>
-                <dd>Space / F</dd>
-              </div>
-              <div>
-                <dt>Use instruments</dt>
-                <dd>Q / E</dd>
-              </div>
-              <div>
-                <dt>Equipment / Map / Pause</dt>
-                <dd>Tab / M / Esc</dd>
-              </div>
-            </dl>
-          </details>
-          <details>
-            <summary>Touch &amp; gamepad</summary>
-            <p>
-              On touch screens, use the directional pad on the left and action
-              buttons on the right. On a gamepad, move with the left stick or
-              D-pad. The bottom face button strikes and the left bumper guards.
-            </p>
-          </details>
-          <details>
-            <summary>Settings &amp; saves</summary>
-            <p>
-              Open Settings from the title or pause menu to adjust graphics,
-              volume, and motion. Progress saves in this browser. Use Export
-              save and Import save in the pause menu to move your journey to
-              another device.
-            </p>
-          </details>
-        </div>
+        </section>
+        <section class="paper" id="satchel" aria-labelledby="satchel-heading">
+          <div class="page-head">
+            <div>
+              <span class="kicker">Equipment</span>
+              <h3 id="satchel-heading">The satchel</h3>
+            </div>
+          </div>
+          <p class="intro">
+            Equip two instruments at a time. The tool you bring home from a
+            dungeon can open an old path.
+          </p>
+          <div class="gear-spread">
+            <div
+              id="item-grid"
+              class="item-grid"
+              role="group"
+              aria-label="Inspect an instrument"
+            ></div>
+            <div class="item-detail" aria-live="polite">
+              <img
+                id="item-art"
+                src="./assets/journal/item-10.png"
+                width="200"
+                height="160"
+                alt=""
+              />
+              <h4 id="item-title">Burst Satchel</h4>
+              <p id="item-note">
+                Burst charges open cracked masonry. Pots replenish charges.
+              </p>
+            </div>
+          </div>
+        </section>
+        <section class="paper" id="controls" aria-labelledby="control-heading">
+          <div class="page-head">
+            <div>
+              <span class="kicker">How to play</span>
+              <h3 id="control-heading">Lantern-bearer’s handbook</h3>
+            </div>
+          </div>
+          <div class="handbook">
+            <div>
+              <h4>Your first quest</h4>
+              <p>
+                Collect Ione’s Burst Satchel in Bellwick. Follow the roads
+                northwest to Mossbell Sanctuary. Explore its chambers, recover
+                the Gale Disc, and face the Briar Cantor.
+              </p>
+              <a class="ink-link" href="./play/index.html?launch=1"
+                >▶ Play Veilbound</a
+              >
+            </div>
+            <div class="control-list">
+              <details open>
+                <summary>Keyboard controls</summary>
+                <dl>
+                  <div>
+                    <dt>Move</dt>
+                    <dd>WASD / Arrow keys</dd>
+                  </div>
+                  <div>
+                    <dt>Strike / Guard</dt>
+                    <dd>J / Hold K</dd>
+                  </div>
+                  <div>
+                    <dt>Dodge / Interact</dt>
+                    <dd>Space / F</dd>
+                  </div>
+                  <div>
+                    <dt>Use instruments</dt>
+                    <dd>Q / E</dd>
+                  </div>
+                  <div>
+                    <dt>Equipment / Map / Pause</dt>
+                    <dd>Tab / M / Esc</dd>
+                  </div>
+                </dl>
+              </details>
+              <details>
+                <summary>Touch &amp; gamepad</summary>
+                <p>
+                  On touch screens, use the directional pad on the left and
+                  action buttons on the right. On a gamepad, move with the left
+                  stick or D-pad. The bottom face button strikes and the left
+                  bumper guards.
+                </p>
+              </details>
+              <details>
+                <summary>Settings &amp; saves</summary>
+                <p>
+                  Open Settings from the title or pause menu to adjust graphics,
+                  volume, and motion. Progress saves in this browser. Use Export
+                  save and Import save in the pause menu to move your journey to
+                  another device.
+                </p>
+              </details>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
     <footer>
-      <div class="shell footer-inner">
-        <a class="wordmark" href="#top"
-          ><img src="./assets/icon.svg" alt="" />Veilbound</a
-        ><span>Echoes of the Hollow Crown</span
-        ><a href="https://github.com/nearbycoder/veilbound"
-          >GitHub repository ↗</a
-        >
-      </div>
+      <a class="brand" href="#top"
+        ><img src="./assets/icon.svg" alt="" />Veilbound</a
+      ><a href="./play/index.html?launch=1">Play in browser ↗</a
+      ><a href="https://github.com/nearbycoder/veilbound">Repository ↗</a>
     </footer>
     <dialog id="screening" aria-labelledby="film-title">
       <div class="film-top">

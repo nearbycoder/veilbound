@@ -24,13 +24,15 @@ Run `node verification/check.mjs` with Node 22+ and Chrome installed to play thr
 
 GitHub Pages publishes the repository root from `main`. The marketing site lives in [index.html](index.html), and its Play links open the standalone game in [play/](play/).
 
-<details>
-<summary>Cover artwork</summary>
+The homepage opens as a bell-tower title screen. Its Play command starts a new journey or resumes a valid local save. The journal pairs all twelve regions of Aurelia with their Gloam counterparts and shows every instrument from the game renderer.
 
-The [desktop cover](assets/media/cover.webp) and [mobile crop](assets/media/cover-mobile.webp) were produced from built-in ImageGen key art. The realm captures, instrument portraits, and gameplay footage come from the game renderer.
+<details>
+<summary>Title-screen artwork</summary>
+
+The [bell tower](assets/journal/bell-tower.webp) and its [mobile crop](assets/journal/bell-tower-mobile.webp) were made with built-in ImageGen. The journal’s portraits, landmarks, items, and location captures use the game renderer.
 
 **Generation prompt**
 
-Create wide landscape key art for an original dark fantasy indie videogame, Veilbound. A luminous late-autumn sun descends behind a distant tall many-spired stone bell citadel, across a deep mountain valley and a winding golden river. Foreground at RIGHT THIRD (x=74%): solitary young adult adventurer seen from behind in windswept dark oxblood hooded cloak, a small brass lantern with a warm flame at hip, boots and broken sword, gazing out from a crag. Organic pine boughs frame upper right and bottom. Left third is evocative shadowed dark teal forest and negative space for website typography, no text in image. Majestic picturesque golden-hour sky with pale bone and apricot clouds, layers of sage and petrol blue mountains, tactile sweeping brushwork, oil-painted hardcover fantasy novel / modern prestige adventure game poster, beautiful atmospheric perspective, sophisticated restrained color, hand-painted realism; dramatic asymmetric composition. Panoramic extra-wide website hero, fill edge-to-edge. No graphics, no borders, no writing, no UI.
+Panoramic 2:1 PIXEL ART title screen environment for Veilbound, no text or UI. Masterful richly detailed hand-pixelled 32-bit gothic RPG art, clearly visible crisp clustered square pixels, selective dithering, ultramarine indigo night sky, pale luminous moonlight, turquoise magic against amber lanterns. Right half: huge ruined bell arch on forested rocky cliff with real antique bell hanging beneath ivy-covered pointed arch. A distinctive small traveller in an oxblood red hooded cloak seen from behind at lower right, holding their bright golden lantern before the arch. In deep valley: tiny golden rooftops and windows of village Bellwick, a long silvery waterfall, pines and distant jagged mountains. A large luminous crescent moon in upper right sky. Left half deliberately quieter dark blue night sky above distant mountains and pine silhouettes, natural negative space behind a menu to be overlaid later. Epic environmental pixel art, beautifully art directed and subtly textured, clearly legible silhouette. No lettering, logos, UI, border, writing or watermarks. Purpose: atmospheric interactive title-screen backdrop.
 
 </details>
