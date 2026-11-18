@@ -201,6 +201,151 @@ function stoneTexture(d, cave, x, y, width, height, span = 83, rise = 50) {
   return true;
 }
 
+const chasmLayers = new WeakMap();
+const steppingStoneLayers = new WeakMap();
+
+function chasmOutline(x, y, w, h, inset) {
+  const edge = new Path2D(),
+    segments = Math.ceil(w / 10);
+  edge.moveTo(x + inset, y + inset + 2);
+  for (let i = 1; i < segments; i++)
+    edge.lineTo(x + (w * i) / segments, y + inset + grain(i, y) * 2.7);
+  edge.lineTo(x + w - inset, y + inset + 2);
+  edge.lineTo(x + w - inset, y + h - inset - 2);
+  for (let i = segments - 1; i > 0; i--)
+    edge.lineTo(x + (w * i) / segments, y + h - inset - grain(i, w) * 2);
+  edge.lineTo(x + inset, y + h - inset - 2);
+  edge.closePath();
+  return edge;
+}
+
+function paintChasm(o, theme, flooded, water) {
+  const { x, y, w, h } = o,
+    [deep, stone, hi] = dungeonColors[theme],
+    rim = chasmOutline(x, y, w, h, 0),
+    hollow = chasmOutline(x, y + 1, w, h - 1, 2.6);
+  g.save();
+  g.clip(rim);
+  rect(x, y, w, h, stone);
+  stoneTexture(theme, !!S.cave, x, y, w, h, 37, 21);
+  g.strokeStyle = hi + "83";
+  g.lineWidth = 0.9;
+  g.stroke(rim);
+  g.clip(hollow);
+  rect(x, y, w, h, deep);
+  if (flooded) materialFill(water, 2, 1, 512, 95, 58, 8, 23);
+  const depth = g.createLinearGradient(0, y, 0, y + h);
+  depth.addColorStop(0, "#0a0d1b");
+  depth.addColorStop(0.29, flooded ? "#071524ac" : "#080c18f5");
+  depth.addColorStop(0.74, flooded ? "#10263a71" : "#0b1122cb");
+  depth.addColorStop(1, "#121929ed");
+  rect(x, y, w, h, depth);
+  g.strokeStyle = "#0a101bd0";
+  g.lineWidth = 1.5;
+  g.stroke(hollow);
+  g.restore();
+}
+
+function chasmArt(o, theme) {
+  const { x, y, w, h } = o,
+    flooded = o.style === "flooded",
+    water = paintedArt["water-surfaces"],
+    key = `${graphics.scale}/${artReady(chamberStone(theme, !!S.cave))}/${flooded && artReady(water)}`;
+  let cached = chasmLayers.get(o);
+  if (cached?.key !== key) {
+    const layer = makeLayer(
+      () => {
+        g.translate(-x, -y);
+        paintChasm(o, theme, flooded, water);
+      },
+      w,
+      h,
+    );
+    cached = { key, layer };
+    chasmLayers.set(o, cached);
+  }
+  g.drawImage(cached.layer, x, y, w, h);
+  if (!flooded || opts.reduced || !opts.atmosphere) return;
+  for (let i = 0; i < Math.floor((w - 16) / 15); i++) {
+    const ripple = (tick / 113 + grain(i, 7)) % 1,
+      X = x + 5 + (i + grain(i, 3) * 0.65) * 15 + ripple * 4,
+      Y = y + h * (0.28 + grain(i, 5) * 0.52);
+    g.beginPath();
+    g.moveTo(X, Y);
+    g.quadraticCurveTo(X + 2, Y - 0.8, X + 5 + ripple * 2, Y + 0.2);
+    g.strokeStyle = `rgba(163,222,220,${Math.sin(ripple * Math.PI) * 0.28})`;
+    g.lineWidth = 0.55;
+    g.stroke();
+  }
+}
+
+function steppingStone(x, y, w, h, index) {
+  const facet = (lip) => [
+    [x + w * 0.18, y + lip],
+    [x + w * 0.79, y + grain(index, 6) * h * 0.16 + lip],
+    [x + w, y + h * 0.47 + lip],
+    [x + w * 0.88, y + h * 0.89 + lip],
+    [x + w * 0.17, y + h * 0.83 + lip],
+    [x, y + h * 0.42 + lip],
+  ];
+  poly(facet(0.95), "#172f44");
+  const surface = g.createLinearGradient(0, y, 0, y + h);
+  surface.addColorStop(0, "#a3c8ba");
+  surface.addColorStop(0.21, "#618f8d");
+  surface.addColorStop(1, "#2d5568");
+  poly(facet(0), surface);
+  line(x + w * 0.2, y, x + w * 0.77, y + h * 0.09, "#c9f3db");
+  line(x + w * 0.24, y + h * 0.58, x + w * 0.8, y + h * 0.64, "#a2d5bc63");
+  petalGlyph(x + w * 0.5, y + h * 0.42, Math.min(1.6, w * 0.16), "#ddf7cf");
+}
+
+function steppingStonesArt(o) {
+  const { x, y, w, h, vertical } = o;
+  let cached = steppingStoneLayers.get(o);
+  if (cached?.scale !== graphics.scale) {
+    const layer = makeLayer(
+      () => {
+        const length = vertical ? h : w,
+          count = Math.max(2, Math.ceil(length / 8)),
+          stride = length / count;
+        for (let i = 0; i < count; i++) {
+          const drift = grain(i, x) - 0.5;
+          if (vertical) {
+            const width = w * (0.79 + drift * 0.12);
+            steppingStone(
+              (w - width) * 0.5 + drift * 2.7,
+              i * stride + 0.35,
+              width,
+              stride - 1.05,
+              i,
+            );
+          } else {
+            const height = Math.min(h - 2, 9 + drift * 2);
+            steppingStone(
+              i * stride + 0.25,
+              (h - height) * 0.5 + drift,
+              stride - 0.4,
+              height,
+              i,
+            );
+          }
+        }
+      },
+      w,
+      h,
+    );
+    cached = { scale: graphics.scale, layer };
+    steppingStoneLayers.set(o, cached);
+  }
+  const pulse = opts.reduced ? 1 : 0.86 + Math.sin(tick / 14) * 0.14;
+  floorLight(x + w / 2, y + h / 2, w * 0.85, h * 0.57, "#8de4d1", 0.34 * pulse);
+  g.save();
+  if (scene.light < 55)
+    g.globalAlpha = opts.reduced ? 0.77 : 0.65 + Math.sin(tick / 4) * 0.33;
+  g.drawImage(cached.layer, x, y, w, h);
+  g.restore();
+}
+
 function chamberMasonry(d, cave) {
   if (!artReady(chamberStone(d, cave))) return false;
   const [shadow, , light] = dungeonColors[d];

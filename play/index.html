@@ -8,7 +8,7 @@
     />
     <meta name="theme-color" content="#10191c" />
     <title>Veilbound · Echoes of the Hollow Crown</title>
-    <link rel="stylesheet" href="./menu.css?v=ultra" />
+    <link rel="stylesheet" href="./menu.css?v=crossing" />
   </head>
   <body>
     <main>
@@ -37,6 +37,8 @@
       </button>
       <p id="fullscreen-status" role="status" hidden></p>
     </main>
+    <p id="journey-status" class="journey-status" aria-live="polite" hidden></p>
+    <p id="spoken-line" class="screen-reader-only" aria-live="polite"></p>
     <div id="touch" aria-label="Touch controls" hidden>
       <section id="pad"></section>
       <section id="buttons"></section>
@@ -231,6 +233,13 @@
                 ></span
               ><input type="checkbox" data-option="fast"
             /></label>
+            <label class="pref-toggle"
+              ><span
+                >Follow the trail<small
+                  >Show the next objective and its route</small
+                ></span
+              ><input type="checkbox" data-option="guidance"
+            /></label>
             <button type="button" class="pref-action" data-command="bindings">
               Keyboard bindings <span aria-hidden="true">›</span>
             </button>
@@ -247,8 +256,10 @@
     </dialog>
     <input hidden id="loadfile" type="file" accept=".json,application/json" />
     <script src="./presentation.js?v=ultra"></script>
-    <script src="./ui.js?v=ultra"></script>
-    <script src="./field-art.js?v=ultra"></script>
+    <script src="./ui.js?v=crossing"></script>
+    <script src="./field-art.js?v=crossing"></script>
+    <script src="./journey.js?v=crossing"></script>
+    <script src="./showcase.js?v=crossing"></script>
     <script>
       "use strict";
       const cv = document.querySelector("canvas"),
@@ -334,9 +345,38 @@
       function loadPaintedArt() {
         for (const name of Object.keys(fieldSheets))
           paintedArt[name] = new Image();
-        for (const [name, image] of Object.entries(paintedArt)) {
+        const opening = [
+          "moonlit-valley",
+          "rowan",
+          "village",
+          "village-ground",
+          "kit-sign",
+          "kit-surfaces",
+          "kit-fittings",
+          "interface",
+          "instruments",
+          "world-surfaces",
+          "region-props",
+          "entrances-early",
+        ];
+        const names = [
+          ...opening,
+          ...Object.keys(paintedArt).filter((name) => !opening.includes(name)),
+        ];
+        for (const name of names) {
+          const image = paintedArt[name];
+          image.decoding = "async";
+          image.fetchPriority = opening.includes(name) ? "high" : "low";
           image.onload = () => {
-            roomCache = titleCache = null;
+            if (["moonlit-valley", "village", "rowan"].includes(name))
+              titleCache = null;
+            if (
+              !/^(foes-|warders-|kit-|guardians|last-bell|instruments|villagers)/.test(
+                name,
+              )
+            )
+              roomCache = null;
+            if (name === "kit-sign" || name === "kit-surfaces") hudTrim = null;
             previewFrame = -1;
             if (
               [
@@ -817,8 +857,9 @@
           master: 100,
           music: 35,
           sfx: 55,
-          sound: false,
-          reduced: false,
+          sound: true,
+          guidance: true,
+          reduced: matchMedia("(prefers-reduced-motion: reduce)").matches,
           fast: false,
           keys: structuredClone(baseKeys),
         },
@@ -939,6 +980,7 @@
       function save() {
         S.x = p.x;
         S.y = p.y;
+        if (showcase) return true;
         try {
           localStorage.setItem(KEY, JSON.stringify(S));
           saved = true;
@@ -961,11 +1003,13 @@
         dialog = { w, s, age: 0 };
         after = fn || null;
         mode = "talk";
-        held.clear();
+        document.getElementById("spoken-line").textContent = w + ". " + s;
+        clearInput();
       }
       function finishTalk() {
         mode = "play";
         dialog = null;
+        document.getElementById("spoken-line").textContent = "";
         const fn = after;
         after = null;
         if (fn) fn();
@@ -993,6 +1037,10 @@
         wake();
       }
       const rawKeys = new Set();
+      let padPrevious = new Set();
+      let inputMethod = matchMedia("(pointer: coarse)").matches
+        ? "touch"
+        : "keyboard";
       function syncHeld() {
         held = new Set([
           ...Array.from(rawKeys, readAction).filter(Boolean),
@@ -1011,17 +1059,32 @@
           return;
         if (bindAction) {
           e.preventDefault();
-          for (const k in opts.keys)
-            opts.keys[k] = opts.keys[k].filter((v) => v !== e.code);
-          opts.keys[bindAction] = [e.code];
+          if (e.code !== "Escape") {
+            const displaced = readAction(e.code);
+            if (displaced && displaced !== bindAction) {
+              const remaining = opts.keys[displaced].filter(
+                (key) => key !== e.code,
+              );
+              opts.keys[displaced] = remaining.length
+                ? remaining
+                : opts.keys[bindAction].slice(0, 1);
+            }
+            opts.keys[bindAction] = [e.code];
+            soundSave();
+          }
           bindAction = null;
-          soundSave();
           return;
         }
+        if (
+          e.code === "Tab" &&
+          (mode === "title" || e.target instanceof HTMLButtonElement)
+        )
+          return;
         let a = readAction(e.code);
         if (a) {
           e.preventDefault();
           if (!e.repeat) {
+            inputMethod = "keyboard";
             down(a);
             rawKeys.add(e.code);
           }
@@ -1036,9 +1099,11 @@
         pressed.clear();
         rawKeys.clear();
         touch.clear();
+        actionPointers.clear();
         for (const button of touchArtwork.values())
           button.classList.remove("held");
-        padHeld.clear();
+        padHeld = new Set();
+        p.buffer = null;
       }
       function pause() {
         if (mode === "play") {
@@ -1051,7 +1116,8 @@
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) pause();
       });
-      const touchArtwork = new Map();
+      const touchArtwork = new Map(),
+        actionPointers = new Map();
       for (const [id, controls] of [
         [
           "pad",
@@ -1102,6 +1168,10 @@
             button.onpointerdown = (e) => {
               e.preventDefault();
               button.setPointerCapture(e.pointerId);
+              inputMethod = "touch";
+              if (!actionPointers.has(action))
+                actionPointers.set(action, new Set());
+              actionPointers.get(action).add(e.pointerId);
               touch.add(action);
               button.classList.add("held");
               down(action);
@@ -1109,7 +1179,11 @@
             button.onlostpointercapture =
               button.onpointercancel =
               button.onpointerup =
-                () => {
+                (e) => {
+                  const active = actionPointers.get(action);
+                  active?.delete(e.pointerId);
+                  if (active?.size) return;
+                  actionPointers.delete(action);
                   touch.delete(action);
                   button.classList.remove("held");
                   syncHeld();
@@ -1120,12 +1194,15 @@
       }
       const refreshTouchShell = mountTouchShell();
       function gamepad() {
-        let gp = navigator.getGamepads?.()[0];
+        let gp = Array.from(navigator.getGamepads?.() || []).find(
+          (pad) => pad && pad.connected !== false,
+        );
         if (!gp) {
           if (padHeld.size) {
-            padHeld.clear();
+            padHeld = new Set();
             syncHeld();
           }
+          padPrevious.clear();
           return;
         }
         let next = new Set();
@@ -1154,7 +1231,13 @@
         if (x > 0.4) next.add("right");
         if (y < -0.4) next.add("up");
         if (y > 0.4) next.add("down");
-        for (let a of next) if (!padHeld.has(a)) pressed.add(a);
+        for (let a of next)
+          if (!padPrevious.has(a)) {
+            inputMethod = "gamepad";
+            pressed.add(a);
+            wake();
+          }
+        padPrevious = next;
         padHeld = next;
         syncHeld();
       }
@@ -6483,6 +6566,15 @@
             ],
             "#fac078",
           );
+          const span = elite ? 49 : 30;
+          g.strokeStyle = "#fac085a8";
+          g.lineWidth = 0.84;
+          g.setLineDash([2.05, 2.45]);
+          g.beginPath();
+          g.moveTo(ax + dx * 4, ay + dy * 4);
+          g.lineTo(X + dx * span, Y + dy * span);
+          g.stroke();
+          g.setLineDash([]);
         }
         const Y0 = Math.max(48, y - (m.big === 2 ? 55 : elite ? 36 : 26));
         petalGlyph(X, Y0, 4.1, "#643147");
@@ -6492,6 +6584,18 @@
         g.restore();
       }
       function impactArt(m, y) {
+        if (m.deflect) {
+          const spread = (15 - m.deflect) * 0.54;
+          ovalLine(
+            m.x,
+            y - 9,
+            7 + spread,
+            4.2 + spread * 0.6,
+            "#bfe5edb5",
+            0.9,
+          );
+          petalGlyph(m.x + 3, y - 13, 2.7, "#edfaff");
+        }
         if (!m.hurt) return;
         const a = clamp(m.hurt / 12, 0, 1);
         const palette = m.big && m.open ? "#b7ffe4" : "#ffe3ae";
@@ -7796,29 +7900,10 @@
           renderMiniature(m, 0);
         });
       }
-      function boulderLip(x, y, w, h, c, seed) {
-        for (let i = 0; i < Math.ceil(w / 4.6); i++) {
-          const X = x + i * 4.6,
-            s = Math.min(4.8, x + w - X),
-            d = h * (0.51 + grain(i, seed) * 0.46);
-          if (s <= 0) continue;
-          poly(
-            [
-              [X, y],
-              [X + s, y],
-              [X + s * 0.91, y + d * 0.74],
-              [X + s * 0.49, y + d],
-              [X, y + d * 0.8],
-            ],
-            c[i % 3 === 0 ? 2 : i % 2],
-          );
-          line(X + 0.36, y + d * 0.57, X + s * 0.7, y + d * 0.71, c[1]);
-        }
-      }
       function hazardArt(o) {
         const { x, y, w, h } = o,
           theme = S.d >= 0 ? S.d : S.area % 10,
-          [deep, stone, hi] = dungeonColors[theme],
+          [, , hi] = dungeonColors[theme],
           path = o.type === "echo" || o.type === "lightwalk",
           activeBridge = path
             ? scene.light > 0
@@ -7829,43 +7914,16 @@
                   Math.abs(n.x - (x + w / 2)) < 59 &&
                   Math.abs(n.y - (y + h / 2)) < 13,
               );
+        if (!o.vertical) chasmArt(o, theme);
+        if (path && activeBridge) {
+          steppingStonesArt(o);
+          return;
+        }
+        if (o.vertical) return;
         g.save();
         g.beginPath();
         g.rect(x, y, w, h);
         g.clip();
-        const depth = g.createLinearGradient(0, y, 0, y + h);
-        depth.addColorStop(0, "#141b32");
-        depth.addColorStop(0.51, "#0a1120");
-        depth.addColorStop(1, deep);
-        g.fillStyle = depth;
-        g.fillRect(x, y, w, h);
-        boulderLip(x, y, w, 3.8, [deep, stone, hi + "a8"], Math.round(y));
-        boulderLip(
-          x,
-          y + h - 2.9,
-          w,
-          3.8,
-          [stone, deep, hi + "8d"],
-          Math.round(y + 7),
-        );
-        for (let s of [-1, 1]) {
-          for (let i = 0; i < Math.ceil(h / 5); i++) {
-            const X = s < 0 ? x : x + w,
-              Y = y + i * 5,
-              n = 2 + grain(i, w) * 2.51;
-            poly(
-              [
-                [X, Y],
-                [X + s * -n, Y + 1],
-                [X + s * -(n * 0.78), Y + 5],
-                [X, Y + 5],
-              ],
-              i % 2 ? stone : deep,
-            );
-            if (i % 2 === 0)
-              rect(X + (s < 0 ? 0.2 : -0.62), Y + 0.9, 0.53, 2, hi + "66");
-          }
-        }
         if (o.type === "gear") {
           const frozen = !!scene.frozen,
             phase = frozen || opts.reduced ? 0 : Math.floor(tick / 6) % 8;
@@ -7899,64 +7957,38 @@
           }
         } else if (activeBridge) {
           const center = y + h * 0.5;
-          if (path) {
-            const cols = ["#6d9c9d", "#9bd7c9", "#d8f3db"];
-            for (let j = 1; j < w; j += 5.4) {
-              const X = x + j;
+          for (let s of [-1, 0, 1]) {
+            const y0 = center + s * 2.42;
+            for (let j = 0; j < w - 1; j += 2.58) {
+              const X = x + j,
+                Y = y0 + Math.sin(j * 0.215 + s) * 1.78;
               poly(
                 [
-                  [X, center - 4.1],
-                  [X + 4.8, center - 4.58],
-                  [X + 5.27, center + 2.7],
-                  [X + 0.54, center + 4],
+                  [X, Y],
+                  [X + 2.87, Y - 0.45],
+                  [X + 2.72, Y + 1.43],
+                  [X, Y + 1.78],
                 ],
-                cols[0],
+                s === 0 ? "#ba975e" : "#92784c",
               );
-              rect(X + 0.63, center - 3.68, 4.15, 0.78, cols[2]);
-              if (j % 3 < 1.5)
-                petalGlyph(X + 2.71, center - 0.25, 1.03, cols[1]);
-            }
-          } else {
-            for (let s of [-1, 0, 1]) {
-              const y0 = center + s * 2.42;
-              for (let j = 0; j < w - 1; j += 2.58) {
-                const X = x + j,
-                  Y = y0 + Math.sin(j * 0.215 + s) * 1.78;
-                poly(
-                  [
-                    [X, Y],
-                    [X + 2.87, Y - 0.45],
-                    [X + 2.72, Y + 1.43],
-                    [X, Y + 1.78],
-                  ],
-                  s === 0 ? "#ba975e" : "#92784c",
+              if (j % 5.16 < 1)
+                enamelLeaf(
+                  X + 1.77,
+                  Y - 0.2,
+                  -0.6,
+                  2.38,
+                  s === 0 ? "#b5c06e" : "#778e58",
                 );
-                if (j % 5.16 < 1)
-                  enamelLeaf(
-                    X + 1.77,
-                    Y - 0.2,
-                    -0.6,
-                    2.38,
-                    s === 0 ? "#b5c06e" : "#778e58",
-                  );
-              }
             }
           }
-        } else {
-          for (let j = 0; j < 6; j++) {
-            const X = x + 3 + grain(j, w) * Math.max(0, w - 7),
-              Y = y + h * 0.36 + grain(j, h) * h * 0.42;
-            rect(X + 0.15, Y + 0.22, 1.67, 0.71, hi + "25");
-            rect(X, Y - 0.17, 0.77, 0.65, stone + "63");
-          }
-          if (path)
-            for (let s of [-1, 1])
-              petalGlyph(
-                x + w * 0.5 + s * (w * 0.5 - 3),
-                y + h * 0.5,
-                1.54,
-                hi + "75",
-              );
+        } else if (path) {
+          for (const side of [-1, 1])
+            petalGlyph(
+              x + w * 0.5 + side * (w * 0.5 - 3),
+              y + h * 0.5,
+              1.54,
+              hi + "75",
+            );
         }
         g.restore();
       }
@@ -8147,14 +8179,11 @@
         caveName = () =>
           ["Bellringer Trial", "The Long Throw", "Pilgrim Vault"][S.area % 3],
         goal = () => {
-          let i = names.findIndex((n, i) => !S.done.includes(i));
-          return i < 0
-            ? "Explore the restored kingdoms."
-            : "Seek " +
-                names[i] +
-                " in " +
-                (i < 4 ? places : gloam)[sites[i]] +
-                ".";
+          const objective = journeyObjective();
+          return objective
+            ? objective.title +
+                (objective.detail ? " · " + objective.detail : "")
+            : "Explore at your own pace.";
         };
       function obj(type, x, y, extra = {}) {
         let o = { type, x, y, ...extra };
@@ -8166,6 +8195,7 @@
       }
       function newRoom(x, y) {
         hitstop = 0;
+        realmTransition = null;
         p = freshPlayer(x, y);
         scene = {
           obj: [],
@@ -8188,7 +8218,8 @@
           seed: 59 + loc() * 97 + (S.d + 1) * 211 + S.r * 43,
         };
         particles.forEach((q) => (q.t = 0));
-        if (S.d >= 0) dungeonRoom();
+        if (showcase) buildShowcaseRoom();
+        else if (S.d >= 0) dungeonRoom();
         else if (S.cave) caveRoom();
         else surface();
         roomCache = null;
@@ -8219,6 +8250,7 @@
       function surfaceConnection(a, b, world) {
         const route = Math.min(a, b) + "-" + Math.max(a, b);
         if (world) {
+          if ((a === 5 || b === 5) && !stableVeil()) return false;
           if (route === "9-10") return !!S.flags.bridge;
           if (route === "3-7") return S.done.includes(7);
           if (route === "4-8") return has(8);
@@ -8574,9 +8606,13 @@
         if ([1, 2, 4, 6, 8, 9].includes(d)) obj("machine", 124, 133, { id: d });
         if (d === 8) obj("node", 233, 127);
       }
-      function locked(to) {
+      function locked(to, from = S.r) {
         if (S.d < 0 || to < 0) return "";
-        let r = S.r,
+        if (showcase)
+          return to === 11 && !showcaseSealsReady()
+            ? "Ring both brass receivers."
+            : "";
+        let r = from,
           f = D().flags;
         if (r === 7 && to === 11 && !S.done.includes(S.d))
           return "The heart chamber opens this passage after victory.";
@@ -8599,6 +8635,10 @@
         return "";
       }
       function go(dir) {
+        if (showcase) {
+          leaveShowcaseRoom(dir);
+          return;
+        }
         let e = scene.exits.find((e) => e.dir === dir);
         if (!e) return;
         let msg = locked(e.to);
@@ -8648,6 +8688,7 @@
           dir === "down" ? 43 : dir === "up" ? 195 : 119,
         );
         if (S.d >= 0 && S.r === 10) checkpoint();
+        else save();
         if (S.d === 3 && S.r === 10 && !S.flags.firstAsh) {
           S.flags.firstAsh = true;
           log(
@@ -8694,21 +8735,14 @@
         toast(names[d]);
       }
       function cross() {
-        if (![0, 1, 2, 3].every((i) => S.done.includes(i))) {
+        if (!stableVeil() && !(S.area === 5 && has(10))) {
           say(
             "Veil Lantern",
-            "In the glass, Bellwick is empty. Four sanctuary seals will steady this crossing.",
+            "This arch is too faint to cross. Bellwick’s arch can hold until the four seals are restored.",
           );
           return;
         }
-        let x = p.x,
-          y = p.y;
-        S.world = 1 - S.world;
-        newRoom(x, y);
-        flash = 24;
-        cue("open");
-        checkpoint();
-        toast(S.world ? "The Gloam" : "Aurelia");
+        crossRealm(p.x, p.y);
       }
       function grant(i) {
         if (has(i)) return;
@@ -8895,7 +8929,13 @@
       };
       function near() {
         return scene.obj
-          .filter((o) => labels[o.type] && !o.gone && dist(p, o) < 21)
+          .filter(
+            (o) =>
+              labels[o.type] &&
+              !o.gone &&
+              (o.type !== "token" || S.quests[o.id] === 1) &&
+              dist(p, o) < (o.type === "guide" && !has(10) ? 24 : 21),
+          )
           .sort((a, b) => dist(a, p) - dist(b, p))[0];
       }
       function interact() {
@@ -8910,6 +8950,7 @@
           if (S.d >= 0 && S.r === 7 && p.y > 177) go("down");
           return;
         }
+        if (showcase && showcaseInteraction(o)) return;
         switch (o.type) {
           case "counter": {
             let msgs = {
@@ -9019,15 +9060,22 @@
               grant(10);
               say(
                 "Merin, the bellwarden",
-                "Ione left you this Burst Satchel. Look for pale cracks in old stones. The orchard sanctuary lies northwest.",
+                "Take the satchel. Raise Ione’s lantern at the little arch east of the square. If she left a trace, it might be on the other side.",
               );
-            } else
+            } else {
+              if (S.world && !S.flags.heardEcho) {
+                S.flags.heardEcho = true;
+                save();
+              }
               say(
                 S.world ? "Nelle, the echo guide" : "Merin, the bellwarden",
                 S.world
-                  ? "Ione is holding the final crossing from inside. Gather the fragments and bring her home."
+                  ? stableVeil()
+                    ? "Ione is holding the final crossing from inside. Gather the fragments and bring her home."
+                    : "She came through carrying a bell that wouldn’t ring. The old roads are closed until you restore the four seals. Go back through the arch and find her trail at Mossbell."
                   : goal(),
               );
+            }
             break;
           case "bell":
             S.hp = S.max;
@@ -9285,7 +9333,7 @@
       function expose(n) {
         let m = scene.mobs.find((m) => m.big === 2);
         if (!m) return;
-        m.open = n;
+        m.open = m.openMax = n;
         m.phase = "recover";
         m.cycle = n;
         scene.obj
@@ -9293,7 +9341,21 @@
           .forEach((o) => (o.on = false));
         burst(m.x, m.y, colors[S.d], 15);
         toast("Core exposed · strike now");
-        tone(750, 0.23);
+        chimeNote(659.25, 0.32, 0.104);
+        chimeNote(987.77, 0.43, 0.08, false, 0.07);
+      }
+      function deflect(m) {
+        m.deflect = 15;
+        burst(m.x, m.y - 8, "#a9d5e4", 4);
+        tone(236, 0.095, "triangle", 0.1, false, 0, 360);
+        chimeNote(955, 0.13, 0.057);
+        if (opts.guidance && m.big && !scene.guardHint) {
+          scene.guardHint = true;
+          toast(
+            m.big === 1 ? "Strike after the warder lunges" : bossHints[S.d],
+          );
+        }
+        return false;
       }
       function hurtMob(m, n, source = "sword") {
         if (m.hp <= 0 || m.hurt > 0) return false;
@@ -9302,19 +9364,13 @@
         if (m.big === 2 && !m.open) {
           if (source === "sword" && S.d === 9 && m.form && scene.light > 0)
             expose(130);
-          else {
-            tone(170, 0.08, "triangle");
-            return false;
-          }
+          else return deflect(m);
         }
         if (m.big === 1 && m.phase !== "recover" && m.stun <= 0) {
-          if (source === "sword") {
-            tone(120, 0.06);
-            return false;
-          }
+          if (source === "sword") return deflect(m);
         }
         if (!m.big && m.role === 3 && m.phase === "warn" && source === "sword")
-          return false;
+          return deflect(m);
         m.hp -= n;
         m.hurt = 12;
         let [x, y] = unit(m.x - p.x, m.y - p.y);
@@ -9358,6 +9414,10 @@
         return true;
       }
       function win() {
+        if (showcase) {
+          finishShowcase();
+          return;
+        }
         let d = S.d;
         if (!S.done.includes(d)) S.done.push(d);
         S.max += 2;
@@ -9426,13 +9486,15 @@
           ((x - p.x) * p.fx + (y - p.y) * p.fy >= -2 || S.flags.guard)
         ) {
           burst(p.x, p.y, "#b9daeb");
-          tone(370, 0.1, "triangle");
+          p.guardImpact = 13;
+          tone(370, 0.12, "triangle", 0.086, false, 0, 510);
+          chimeNote(820, 0.17, 0.038);
           p.inv = 14;
           return;
         }
         S.hp--;
         p.inv = 72;
-        flash = 5;
+        p.hitPulse = 14;
         tone(90, 0.25, "triangle");
         if (hazard) {
           [p.x, p.y] = p.safe;
@@ -9455,7 +9517,11 @@
         p.inv = 100;
         mode = "play";
         save();
-        toast("Returned to the last bell");
+        toast(
+          showcase
+            ? "Returned to the last checkpoint"
+            : "Returned to the last bell",
+        );
       }
       function inside(x, y, o, pad = 0) {
         return (
@@ -9465,8 +9531,9 @@
           y < o.y + o.h + pad
         );
       }
-      function bridged(x, y) {
+      function bridged(x, y, stable = false) {
         if (
+          !stable &&
           scene.light > 0 &&
           scene.traps.some(
             (o) => ["echo", "lightwalk"].includes(o.type) && inside(x, y, o, 2),
@@ -9480,7 +9547,8 @@
               Math.abs(x - o.x) < 31 &&
               Math.abs(y - o.y) < 10,
           ) ||
-          (scene.roots > 0 &&
+          (!stable &&
+            scene.roots > 0 &&
             scene.obj.some(
               (o) =>
                 o.type === "node" &&
@@ -9489,10 +9557,10 @@
             ))
         );
       }
-      function waterAt(x, y) {
+      function waterAt(x, y, stable = false) {
         return (
           scene.water.some((o) => o.style !== "dry" && inside(x, y, o)) &&
-          !bridged(x, y)
+          !bridged(x, y, stable)
         );
       }
       function solid(x, y, mob = false) {
@@ -9523,10 +9591,12 @@
           (waterAt(x, y) && !has(1) && !mob)
         );
       }
-      function safePoint(x, y) {
+      function safePoint(x, y, stable = false) {
         return (
           !solid(x, y) &&
-          !scene.traps.some((o) => inside(x, y, o, 2) && !bridged(x, y))
+          (!stable || has(1) || !waterAt(x, y, true)) &&
+          (!scene.traps.some((o) => inside(x, y, o, 2)) ||
+            bridged(x, y, stable))
         );
       }
       function slide(actor, dx, dy, mob = false) {
@@ -9595,6 +9665,10 @@
         }
       }
       function targetHit(o, i) {
+        if (showcase && o.type === "target") {
+          activateShowcaseSeal(o, i);
+          return;
+        }
         if (o.type === "relay" && o.tool === i) {
           o.on = true;
           tone(800, 0.17);
@@ -9836,6 +9910,7 @@
           if (m.hp <= 0) continue;
           m.age++;
           if (m.hurt) m.hurt--;
+          if (m.deflect) m.deflect--;
           if (m.open) m.open--;
           if (m.stun) {
             m.stun--;
@@ -9936,7 +10011,7 @@
           return;
         }
         if (pressed.has("map")) {
-          openMenu("map");
+          openMenu(showcase ? "journal" : "map");
           return;
         }
         if (pressed.has("act")) {
@@ -9944,15 +10019,23 @@
           interact();
           if (mode !== "play" || scene !== old) return;
         }
-        for (let k of ["inv", "cd", "atk", "rest", "itemCD"]) if (p[k]) p[k]--;
+        for (let k of [
+          "inv",
+          "cd",
+          "atk",
+          "rest",
+          "itemCD",
+          "guardImpact",
+          "hitPulse",
+        ])
+          if (p[k]) p[k]--;
         let x = Number(held.has("right")) - Number(held.has("left")),
           y = Number(held.has("down")) - Number(held.has("up")),
           [dx, dy] = unit(x, y);
         if ((x || y) && !p.atk && !p.dash) {
-          if (
-            (x && !y) ||
-            (x && y && (pressed.has("left") || pressed.has("right")))
-          ) {
+          const side = pressed.has("left") || pressed.has("right");
+          const forward = pressed.has("up") || pressed.has("down");
+          if (x && (!y || side || (!forward && p.fy === 0))) {
             p.fx = Math.sign(x);
             p.fy = 0;
             p.face = p.fx;
@@ -9961,10 +10044,15 @@
             p.fy = Math.sign(y);
           }
         }
-        if (pressed.has("attack")) sword();
+        if (p.buffer && tick > p.buffer.until) p.buffer = null;
+        if (p.buffer?.action === "attack" && !p.cd && !p.dash && !p.carry) {
+          sword();
+          p.buffer = null;
+        }
         if (pressed.has("slot1")) use(S.slots[0]);
         if (pressed.has("slot2")) use(S.slots[1]);
-        if (pressed.has("dodge") && !p.rest && !p.atk && !p.carry) {
+        if (p.buffer?.action === "dodge" && !p.rest && !p.atk && !p.carry) {
+          p.buffer = null;
           p.dash = 8;
           p.rest = 42;
           p.ddx = dx || dy ? dx : p.fx;
@@ -10035,7 +10123,7 @@
           } else damage(p.x, p.y, true);
           if (mode !== "play") return;
         } else if (
-          safePoint(p.x, p.y) &&
+          safePoint(p.x, p.y, true) &&
           scene.age % 12 === 0 &&
           p.x > 19 &&
           p.x < 365 &&
@@ -13982,11 +14070,22 @@
         drawables.push([
           p.y,
           () => {
-            if (p.inv > 0 && tick % 8 < 3 && !opts.reduced) return;
             oval(p.x, p.y + 1, 7, 2.45, "#20203665");
             if (d >= 0 || w || S.cave)
               floorLight(p.x - 3.8, p.y - 3.2, 13, 8, "#f2ba75", 0.3);
+            g.save();
+            if (!opts.reduced && p.inv > 7 && p.hitPulse) g.globalAlpha = 0.77;
             hero(p.x, p.y, 1, p.face, p.step, p.fy < 0);
+            g.restore();
+            if (p.guardImpact)
+              ovalLine(
+                p.x + p.fx * 7,
+                p.y - 7 + p.fy * 4,
+                10 + (13 - p.guardImpact) * 0.54,
+                5.4 + (13 - p.guardImpact) * 0.36,
+                "#c4e9f4",
+                0.9,
+              );
             if (p.carry)
               objArt({ ...p.carry, gone: false, x: p.x, y: p.y - 17 });
             if (p.atk) slashArt(p.x, p.y);
@@ -14047,7 +14146,10 @@
           }
         }
         ambientArt();
+        paintRealmTransition();
         drawGameHud();
+        if (opts.guidance && mode === "play")
+          drawJourneyObjective(journeyObjective());
         if (mode === "play" && S.d >= 0 && S.r !== 11) {
           let e = scene.exits.find((e) =>
             e.dir === "left"
@@ -14073,8 +14175,10 @@
           !(o.type === "token" && S.quests[o.id] !== 1)
         ) {
           const y = Math.max(52, p.y - (artReady(paintedArt.rowan) ? 28 : 22));
-          interactionTag(o.label || labels[o.type], p.x, y);
+          if (!p.carry) interactionTag(interactionLabel(o), p.x, y, interact);
         }
+        if (mode === "play" && p.carry)
+          interactionTag("Throw pot", p.x, p.y - 25, interact);
         if (noticeTime > 0 && mode === "play")
           statusRibbon(notice, 201.8, S.world ? "slate" : "wood");
         if (flash && !opts.reduced)
@@ -14133,11 +14237,37 @@
           .replace("Arrow", "")
           .replace("Escape", "Esc");
       }
+      function actionLabel(action) {
+        if (inputMethod === "touch")
+          return (
+            {
+              act: "Use",
+              attack: "Strike",
+              dodge: "Dodge",
+              shield: "Guard",
+              slot1: "I",
+              slot2: "II",
+            }[action] || bindingLabels[action]
+          );
+        if (inputMethod === "gamepad")
+          return (
+            {
+              act: "X",
+              attack: "A",
+              dodge: "B",
+              shield: "LB",
+              slot1: "Y",
+              slot2: "RB",
+            }[action] || bindingLabels[action]
+          );
+        return keyName(action);
+      }
       function hitBox(x, y, w, h, fn, label, active = false) {
         hot.push({ x, y, w, h, fn, label, active });
       }
       cv.onpointerdown = (e) => {
         e.preventDefault();
+        inputMethod = e.pointerType === "touch" ? "touch" : "keyboard";
         let b = cv.getBoundingClientRect(),
           x = ((e.clientX - b.left) * W) / b.width,
           y = ((e.clientY - b.top) * H) / b.height;
@@ -14164,6 +14294,8 @@
         uiPointer = null;
       };
       function start(cont) {
+        showcase = null;
+        crossingTitleScreen = false;
         if (cont) {
           try {
             let v = JSON.parse(localStorage.getItem(KEY));
@@ -14184,7 +14316,7 @@
           checkpoint();
           say(
             "Merin, the bellwarden",
-            "Rowan, Ione rang the west bell three nights ago. Her lantern came back alone. Take her satchel by the village green, then head northwest to Mossbell.",
+            "Rowan, the west bell rang three nights ago. Ione’s lantern came back without her. Come take her satchel. We’ll follow the light she left.",
           );
         } else
           toast(S.end ? "Pre-finale exploration · Crown dismantled" : place());
@@ -14207,7 +14339,24 @@
         titleLockup();
         if (noticeTime > 0) statusRibbon(notice, 179);
       }
+      function titleChoices() {
+        if (crossingTitleScreen)
+          return ["Begin the chapter", "Full journey", "Settings"];
+        return saved
+          ? ["Continue journey", "New journey", "Settings", crossingTitle]
+          : ["Begin journey", "Settings", crossingTitle];
+      }
       function titleChoose(i) {
+        if (crossingTitleScreen) {
+          if (i === 0) startShowcase();
+          else if (i === 1) leaveShowcase(true);
+          else openMenu("settings");
+          return;
+        }
+        if (i === titleChoices().length - 1) {
+          startShowcase();
+          return;
+        }
         if (saved) {
           if (i === 0) start(true);
           if (i === 1) openMenu("confirm");
@@ -14243,7 +14392,7 @@
           cv.focus({ preventScroll: true });
           if (settingsReturn === "pause") {
             openMenu("pause");
-            sel = 7;
+            sel = entries().indexOf("Settings");
             return;
           }
         }
@@ -14268,6 +14417,15 @@
       function entries() {
         switch (menu) {
           case "pause":
+            if (showcase)
+              return [
+                "Resume",
+                "Equipment",
+                "Quest journal",
+                "Return to checkpoint",
+                "Settings",
+                "Title screen",
+              ];
             return [
               "Resume",
               "Equipment",
@@ -14297,6 +14455,17 @@
       function menuChoose(n, change = 1) {
         let m = menu;
         if (m === "pause") {
+          if (showcase) {
+            [
+              closeMenu,
+              () => openMenu("inventory"),
+              () => openMenu("journal"),
+              retry,
+              () => openMenu("settings"),
+              leaveShowcase,
+            ][n]?.();
+            return;
+          }
           if (n === 0) closeMenu();
           else if (n <= 3) openMenu(["", "inventory", "map", "journal"][n]);
           else if (n === 4) {
@@ -14326,7 +14495,10 @@
           }
           closeMenu();
         } else if (m === "inventory" && S.items[n] !== undefined) {
-          S.slots[change < 0 ? 1 : 0] = S.items[n];
+          const slot = change < 0 ? 1 : 0;
+          const found = S.slots.indexOf(S.items[n]);
+          if (found >= 0 && found !== slot) S.slots[found] = S.slots[slot];
+          S.slots[slot] = S.items[n];
           save();
           tone(640, 0.1);
         }
@@ -14345,7 +14517,9 @@
       }
       document.querySelector("#loadfile").onchange = async (e) => {
         try {
-          let v = JSON.parse(await e.target.files[0].text());
+          const content = await e.target.files[0]?.text();
+          if (showcase) return;
+          const v = JSON.parse(content);
           if (!valid(v)) throw Error();
           if (preferences.open) preferences.close();
           S = v;
@@ -14355,6 +14529,7 @@
           save();
           toast("Journey imported");
         } catch {
+          if (showcase) return;
           if (menuFrom === "title") {
             mode = "title";
             say(
@@ -14366,8 +14541,9 @@
             mode = "play";
             toast("Invalid save file");
           }
+        } finally {
+          e.target.value = "";
         }
-        e.target.value = "";
       };
       function step() {
         tick++;
@@ -14375,10 +14551,17 @@
         if (noticeTime) noticeTime--;
         if (flash) flash--;
         if (mode === "play") {
+          const action = pressed.has("dodge")
+            ? "dodge"
+            : pressed.has("attack")
+              ? "attack"
+              : null;
+          if (action) p.buffer = { action, until: tick + 7 };
+          if (showcase) showcase.ticks++;
           if (hitstop) hitstop--;
           else playerStep();
         } else if (mode === "title") {
-          let n = saved ? 3 : 2;
+          let n = titleChoices().length;
           if (pressed.has("down") || pressed.has("up"))
             sel = (sel + (pressed.has("down") ? 1 : n - 1)) % n;
           if (pressed.has("act") || pressed.has("attack")) titleChoose(sel);
@@ -14390,6 +14573,10 @@
             pressed.has("pause")
           )
             finishTalk();
+        } else if (mode === "showcaseComplete") {
+          if (pressed.has("up") || pressed.has("down")) sel = 1 - sel;
+          if (pressed.has("act") || pressed.has("attack"))
+            sel === 0 ? startShowcase() : leaveShowcase(true);
         } else if (mode === "ending" || mode === "defeat") {
           if (pressed.has("act") || pressed.has("attack")) retry();
         } else if (mode === "menu" && menu === "settings") {
@@ -14397,7 +14584,7 @@
         } else if (mode === "menu" && !bindAction) {
           if (
             pressed.has("pause") ||
-            (pressed.has("map") && menu === "map") ||
+            (pressed.has("map") && menu === (showcase ? "journal" : "map")) ||
             (pressed.has("inventory") && menu === "inventory")
           )
             closeMenu();
@@ -14434,6 +14621,8 @@
       }
       function paint() {
         hot = [];
+        if (mode !== "play" || !opts.guidance)
+          document.getElementById("journey-status").hidden = true;
         if (hudSettings.hidden !== (mode !== "play"))
           hudSettings.hidden = mode !== "play";
         const showFullscreen =
@@ -14455,6 +14644,7 @@
         if (mode === "title") title();
         else if (mode === "menu") paintGameMenu();
         else if (mode === "talk") paintDialogue();
+        else if (mode === "showcaseComplete") paintShowcaseComplete();
         else if (mode === "ending") paintEnding();
         else {
           drawScene();
@@ -14466,12 +14656,15 @@
         acc = 0;
       function loop(now) {
         if (!document.hidden) {
-          acc += Math.min(90, now - prev);
-          while (acc >= 1000 / 60) {
+          const interval = 1000 / 60;
+          acc += Math.min(90, Math.max(0, now - prev));
+          let advanced = false;
+          while (acc >= interval - 0.05) {
             step();
-            acc -= 1000 / 60;
+            acc -= interval;
+            advanced = true;
           }
-          paint();
+          if (advanced) paint();
         } else acc = 0;
         prev = now;
         requestAnimationFrame(loop);
@@ -14684,6 +14877,8 @@
         }
         preferences.querySelector("[data-command=sample]").textContent =
           opts.sound ? "Preview mix" : "Enable sound & preview";
+        preferences.querySelector("[data-command=import]").hidden = !!showcase;
+        preferences.querySelector("[data-command=import]").hidden = !!showcase;
       }
       function showPreferences(fromBindings) {
         if (!fromBindings) preferenceTab = "graphics";
@@ -14750,7 +14945,7 @@
             openMenu("bindings");
             break;
           case "import":
-            document.getElementById("loadfile").click();
+            if (!showcase) document.getElementById("loadfile").click();
             break;
           case "sample":
             if (!opts.sound) {
@@ -14829,8 +15024,14 @@
       applyGraphics();
       applyBrightness();
       loadPaintedArt();
-      document.fonts.load("18px Veil Serif").catch(() => {});
-      if (new URLSearchParams(location.search).get("launch") === "1") {
+      document.fonts
+        .load("18px Veil Serif")
+        .then(() => (hudTrim = null))
+        .catch(() => {});
+      if (
+        !crossingTitleScreen &&
+        new URLSearchParams(location.search).get("launch") === "1"
+      ) {
         // A damaged save still gets the title screen and its explicit New Journey option.
         if (saved) start(true);
         else {

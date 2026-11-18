@@ -7,7 +7,7 @@
     <title>Veilbound — Echoes of the Hollow Crown</title>
     <meta
       name="description"
-      content="Carry a lost lantern through two intertwined worlds. Explore ten dungeons, master forgotten instruments, and play Veilbound directly in your browser."
+      content="Ring Bellwick’s bell and follow its answer into a world of echoes. Play The First Crossing or explore all ten dungeons of Veilbound in your browser."
     />
     <link rel="canonical" href="https://nearbycoder.github.io/veilbound/" />
     <meta property="og:type" content="website" />
@@ -17,7 +17,7 @@
     />
     <meta
       property="og:description"
-      content="A lantern, two worlds, and a missing bellwarden. Play the adventure in your browser."
+      content="Ione’s lantern came back without her. Follow the bell into the Gloam in a playable chapter of Veilbound."
     />
     <meta
       property="og:image"
@@ -36,7 +36,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./assets/site.css?v=ultra" />
-    <link rel="stylesheet" href="./assets/chronicle.css?v=ultra" />
+    <link rel="stylesheet" href="./assets/chronicle.css?v=crossing" />
     <link
       rel="preload"
       href="./assets/type/cormorant-garamond-medium.ttf"
@@ -44,7 +44,7 @@
       type="font/ttf"
       crossorigin
     />
-    <script src="./assets/site.js?v=ultra" defer></script>
+    <script src="./assets/site.js?v=crossing" defer></script>
   </head>
   <body id="top">
     <a class="skip" href="#main">Skip to game overview</a>
@@ -54,12 +54,12 @@
           ><img src="./assets/icon.svg" alt="" />Veilbound</a
         >
         <nav aria-label="Site navigation">
+          <a href="#crossing">The chapter</a>
           <a href="#veil">The worlds</a>
-          <a href="#gameplay">Gameplay</a>
           <a href="#atlas">Field journal</a>
         </nav>
-        <a class="nav-play" href="./play/index.html?launch=1&amp;v=ultra"
-          >Play <span aria-hidden="true">↗</span></a
+        <a class="nav-play" href="./play/index.html?launch=1&amp;v=crossing"
+          >Full game <span aria-hidden="true">↗</span></a
         >
       </div>
     </header>
@@ -95,15 +95,18 @@
             <p class="subtitle">Echoes of the Hollow Crown</p>
           </div>
           <p class="hero-description">
-            Carry a missing bellwarden’s lantern through two worlds that share
-            the same roads.
+            Ione’s lantern came back without her. Ring Bellwick’s bell and
+            follow its answer into the Gloam.
           </p>
           <nav class="game-menu" aria-label="Game menu">
-            <a class="launch" href="./play/index.html?launch=1&amp;v=ultra"
-              >Play in browser <span aria-hidden="true">↗</span></a
+            <a class="launch" href="./play/index.html?chapter=crossing"
+              >Play The First Crossing <span aria-hidden="true">↗</span></a
             >
-            <a id="watch" data-watch href="./assets/media/gameplay.mp4?v=ultra"
-              ><span aria-hidden="true">▶</span> Watch gameplay</a
+            <a
+              id="watch"
+              data-watch
+              href="./assets/media/the-first-crossing.mp4"
+              ><span aria-hidden="true">▶</span> Watch trailer</a
             >
           </nav>
         </div>
@@ -132,6 +135,39 @@
           </button>
         </div>
       </div>
+      <section class="chapter" id="crossing" aria-labelledby="chapter-heading">
+        <div class="chapter-copy">
+          <img
+            class="chapter-bell"
+            src="./assets/media/handbell.webp"
+            width="52"
+            height="69"
+            alt=""
+            loading="lazy"
+          />
+          <h2 id="chapter-heading">The First Crossing</h2>
+          <p>
+            Follow the bell’s echo from a sunlit village to the Drowned Choir.
+            Raise stepping stones with the Echo Chime, then use the same
+            instrument to silence the guardian’s song.
+          </p>
+          <a class="call-to-play" href="./play/index.html?chapter=crossing"
+            >Play the chapter <span aria-hidden="true">↗</span></a
+          >
+        </div>
+        <figure class="capture">
+          <img
+            src="./assets/media/choir-passage.webp"
+            alt="Rowan stands at the edge of a flooded vault, where the Echo Chime has revealed luminous stepping stones."
+            width="1200"
+            height="675"
+            loading="lazy"
+          />
+          <figcaption>
+            <span>Drowned Choir</span><small>Bell passage</small>
+          </figcaption>
+        </figure>
+      </section>
       <section class="veil-section" id="veil" aria-labelledby="veil-title">
         <header class="section-intro">
           <div>
@@ -190,9 +226,9 @@
           <a
             class="reel-link"
             data-watch
-            href="./assets/media/gameplay.mp4?v=ultra"
+            href="./assets/media/the-first-crossing.mp4"
           >
-            <span aria-hidden="true">▶</span> Watch gameplay
+            <span aria-hidden="true">▶</span> Watch trailer
           </a>
         </header>
         <div class="capture-grid">
@@ -294,8 +330,8 @@
               <figcaption aria-live="polite">
                 <h4 id="land-title">Bellwick Village</h4>
                 <p id="land-note">
-                  Find Merin on the village green. Ring the bell to restore your
-                  supplies before setting out for Mossbell Sanctuary.
+                  Find Merin on the village green. A brief trip to Hushwick
+                  starts the trail that leads to Mossbell Sanctuary.
                 </p>
               </figcaption>
             </figure>
@@ -351,11 +387,13 @@
             <div>
               <h4>Your first quest</h4>
               <p>
-                Collect Ione’s Burst Satchel in Bellwick. Follow the roads
-                northwest to Mossbell Sanctuary. Explore its chambers, recover
-                the Gale Disc, and face the Briar Cantor.
+                Meet Merin on the Bellwick green to collect Ione’s Burst
+                Satchel. Follow the trail into Hushwick and back, then head west
+                through Westwind Fields and north to Mossbell Sanctuary.
               </p>
-              <a class="ink-link" href="./play/index.html?launch=1&amp;v=ultra"
+              <a
+                class="ink-link"
+                href="./play/index.html?launch=1&amp;v=crossing"
                 >▶ Play Veilbound</a
               >
             </div>
@@ -399,8 +437,9 @@
                 <p>
                   Choose Ultra 4K in Graphics for a 3840 × 2160 game view, and
                   use the corner button to enter fullscreen. Settings also
-                  include volume and motion. Use Export save and Import save in
-                  the pause menu to move your journey to another device.
+                  include volume, motion, and trail guidance. Use Export save
+                  and Import save in the pause menu to move your journey to
+                  another device.
                 </p>
               </details>
             </div>
@@ -418,36 +457,42 @@
         <div>
           <h2 id="invite-title">Take up the lantern</h2>
           <p>
-            Play with a keyboard, gamepad, or touch controls. Your journey saves
-            in your browser.
+            Explore 24 regions and ten dungeons with a keyboard, gamepad, or
+            touch controls. Your campaign saves in this browser.
           </p>
         </div>
-        <a class="call-to-play" href="./play/index.html?launch=1&amp;v=ultra"
-          >Play in browser <span aria-hidden="true">↗</span></a
+        <a class="call-to-play" href="./play/index.html?launch=1&amp;v=crossing"
+          >Play the full game <span aria-hidden="true">↗</span></a
         >
       </section>
     </main>
     <footer>
       <a class="brand" href="#top"
         ><img src="./assets/icon.svg" alt="" />Veilbound</a
-      ><a href="./play/index.html?launch=1&amp;v=ultra">Play in browser ↗</a
+      ><a href="./play/index.html?launch=1&amp;v=crossing">Full game ↗</a
+      ><a href="./downloads/veilbound.zip" download>Offline download ↓</a
       ><a href="https://github.com/nearbycoder/veilbound">Repository ↗</a>
     </footer>
     <dialog id="screening" aria-labelledby="film-title">
       <div class="film-top">
-        <h2 id="film-title">Gameplay</h2>
-        <button type="button" aria-label="Close gameplay video">×</button>
+        <h2 id="film-title">The First Crossing</h2>
+        <button type="button" aria-label="Close trailer">×</button>
       </div>
       <video
         controls
         playsinline
         preload="none"
-        poster="./assets/media/bellwick.webp?v=ultra"
-        aria-label="Silent gameplay footage showing exploration and dungeon combat"
+        poster="./assets/media/choir-passage.webp"
+        aria-label="Gameplay trailer for The First Crossing"
       >
-        <source src="./assets/media/gameplay.mp4?v=ultra" type="video/mp4" />
+        <source src="./assets/media/the-first-crossing.mp4" type="video/mp4" />
+        <track
+          kind="captions"
+          src="./assets/media/the-first-crossing.en.vtt"
+          srclang="en"
+          label="English"
+        />
       </video>
-      <p>Orchard Weald · Hushwick · Emberglass Foundry · Drowned Choir</p>
     </dialog>
   </body>
 </html>

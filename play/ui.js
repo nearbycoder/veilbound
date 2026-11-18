@@ -1,6 +1,9 @@
 "use strict";
 
 const menuDisplay = '"Veil Serif", Georgia, serif';
+const portraitControls = matchMedia(
+  "(pointer: coarse) and (orientation: portrait)",
+);
 const uiPaper = "#fff2d4";
 const uiGold = "#e8c48a";
 const uiMuted = "#d0b997";
@@ -106,7 +109,16 @@ function kitFitting(name, x, y, size, alpha = 1) {
 }
 
 function kitObject(index, x, y, size) {
-  return paintedCutout("interface", index, 2, x, y + size * 0.47, size);
+  if (index !== 0)
+    return paintedCutout("interface", index, 2, x, y + size * 0.47, size);
+  // Exclude the stray mark in the handbell cell’s right gutter.
+  g.save();
+  g.beginPath();
+  g.rect(x - size / 2, y - size / 2 - 1, size * 0.86, size + 2);
+  g.clip();
+  const drawn = paintedCutout("interface", 0, 2, x, y + size * 0.47, size);
+  g.restore();
+  return drawn;
 }
 
 function uiText(
@@ -313,11 +325,18 @@ function titleLockup() {
   fill.addColorStop(1, "#bd8146");
   uiText("Veilbound", 22.5, 85.7, "#140c16", 46.5);
   uiText("Veilbound", 21, 84, fill, 46.5);
-  spaced("ECHOES OF THE HOLLOW CROWN", 25, 98, 0.68, "#f3d3a6", 6.3);
+  spaced(
+    crossingTitleScreen
+      ? crossingTitle.toUpperCase()
+      : "ECHOES OF THE HOLLOW CROWN",
+    25,
+    98,
+    0.68,
+    "#f3d3a6",
+    6.3,
+  );
   leafRule(24, 107, 131);
-  const choices = saved
-    ? ["Continue journey", "New journey", "Settings"]
-    : ["Begin journey", "Settings"];
+  const choices = titleChoices();
   choices.forEach((label, i) =>
     menuButton(
       label,
@@ -337,7 +356,7 @@ function titleLockup() {
   rect(0, 186, W, H - 186, shade);
   keyCap("↑ ↓", 24, 198, 18, 10);
   uiText("Select", 46, 205.5, uiMuted, 8);
-  keyCap(keyName("act"), 75, 198);
+  keyCap(actionLabel("act"), 75, 198);
   uiText("Confirm", 92, 205.5, uiMuted, 8);
   menuButton(legend, 307, 195, 62, toggleSound, false, 16, { center: true });
 }
@@ -368,6 +387,20 @@ function drawPause() {
   leafRule(175, 74, w, "#84572f8b");
   uiText("Current objective", 175, 86, inkFaint, 8.9);
   uiParagraph(goal(), 175, 97, w, 10, 10.4, uiInk);
+  if (showcase) {
+    leafRule(175, 115, w, "#84572f8b");
+    uiText(crossingTitle, 175, 130, uiInk, 12);
+    uiParagraph(
+      "The chapter keeps its own checkpoints for this session.",
+      175,
+      143,
+      w,
+      9.6,
+      11,
+      inkFaint,
+    );
+    return;
+  }
   const seals = S.done.filter((i) => i < 4).length;
   const fragments = S.done.length - seals;
   const progress = [
@@ -407,14 +440,21 @@ function drawJournal() {
   uiText("Current objective", 32, 56, inkFaint, 8.9);
   uiParagraph(goal(), 32, 68, 142, 9.5, 10.5, uiInk);
   leafRule(32, 91, 141, "#7b4a2572");
-  names.forEach((name, i) => {
-    const y = 101 + i * 7.9 + (i >= 4 ? 3 : 0);
-    const done = S.done.includes(i);
-    if (i === 4) line(32, y - 8.4, 173, y - 8.4, "#85572f58");
-    if (done) kitFitting(i < 4 ? "redSeal" : "violetSeal", 35, y - 2.1, 7.8);
-    else petalGlyph(35, y - 2.5, 1.7, "#75533795");
-    uiText(name, 42, y, done ? "#385037" : uiInk, 8.5, "left", 130);
-  });
+  if (showcase) {
+    uiText(crossingTitle, 32, 110, uiInk, 13);
+    if (showcase.rung) uiText("✓ Bellwick’s bell rang", 33, 127, uiInk, 9.1);
+    if (S.flags.sawGloam) uiText("✓ Reached Hushwick", 33, 142, uiInk, 9.1);
+    if (showcaseSealsReady())
+      uiText("✓ The receivers rang", 33, 157, uiInk, 9.1);
+  } else
+    names.forEach((name, i) => {
+      const y = 101 + i * 7.9 + (i >= 4 ? 3 : 0);
+      const done = S.done.includes(i);
+      if (i === 4) line(32, y - 8.4, 173, y - 8.4, "#85572f58");
+      if (done) kitFitting(i < 4 ? "redSeal" : "violetSeal", 35, y - 2.1, 7.8);
+      else petalGlyph(35, y - 2.5, 1.7, "#75533795");
+      uiText(name, 42, y, done ? "#385037" : uiInk, 8.5, "left", 130);
+    });
   const notes = journalNotes();
   const pages = Math.max(1, Math.ceil(notes.length / 10));
   const shownPage = Math.min(page, pages - 1);
@@ -714,7 +754,7 @@ function atlasCourse(name, x, y, w, h, icon) {
   else kitFitting(icon, x + w - 5.9, y + h * 0.5, h - 1.6);
 }
 
-function mapLandTile(i, x, y, known, here) {
+function mapLandTile(i, x, y, known, here, waypoint) {
   const w = 68,
     h = 34,
     k = mapWorld * 12 + i;
@@ -723,7 +763,7 @@ function mapLandTile(i, x, y, known, here) {
     y - h / 2 - 1,
     w + 2,
     h + 2,
-    here ? "#8d5028" : "#a27c5059",
+    waypoint ? "#8b4a25" : here ? "#8d5028" : "#a27c5059",
   );
   const sheet = paintedArt["world-surfaces"];
   if (known && artReady(sheet)) {
@@ -757,9 +797,10 @@ function mapLandTile(i, x, y, known, here) {
     const alpha = mapWorld ? "#6e4e6a58" : "#925f323e";
     rect(x - w / 2, y - h / 2, w, h, alpha);
   }
-  if (known) {
+  if (known || waypoint) {
     if (here) kitFitting(mapWorld ? "violetSeal" : "redSeal", x, y - 3, 17);
-    else paintedCutout("region-props", k, 4, x, y + 3, 21);
+    else if (known) paintedCutout("region-props", k, 4, x, y + 3, 21);
+    else kitObject(3, x, y - 4, 16);
     const name = (mapWorld ? gloam : places)[i];
     rect(x - w / 2, y + 5, w, 12, here ? "#683c25ed" : "#221a16e9");
     uiText(name, x, y + 13.2, uiPaper, 8.2, "center", w - 5);
@@ -774,19 +815,20 @@ function mapLandTile(i, x, y, known, here) {
         "center",
       );
     if (S.bells.includes(k)) kitObject(0, x + 26, y - 5, 13);
-    if (S.notes[k]) petalGlyph(x + 18, y - 11, 2.3, "#ffe499");
-    hitBox(
-      x - w / 2,
-      y - h / 2,
-      w,
-      h,
-      () => {
-        S.notes[k] = !S.notes[k];
-        save();
-      },
-      (S.notes[k] ? "Unmark " : "Mark ") + name,
-      here,
-    );
+    if (waypoint || S.notes[k]) petalGlyph(x + 18, y - 11, 2.3, "#ffe499");
+    if (known)
+      hitBox(
+        x - w / 2,
+        y - h / 2,
+        w,
+        h,
+        () => {
+          S.notes[k] = !S.notes[k];
+          save();
+        },
+        (S.notes[k] ? "Unmark " : "Mark ") + name,
+        here,
+      );
   } else {
     petalGlyph(x, y, 3.5, "#936a437b");
     leafRule(x - 21, y, 42, "#9d6e4235");
@@ -809,6 +851,11 @@ function drawWorldMap() {
     coords[i % 4],
     64 + Math.floor(i / 4) * 42,
   ]);
+  const waypoint = opts.guidance ? worldWaypoint(mapWorld) : null;
+  const route =
+    waypoint !== null && mapWorld === S.world
+      ? routeBetween(S.area, waypoint, (area) => worldNeighbors(area, mapWorld))
+      : [];
   for (let i = 0; i < places.length; i++) {
     for (const next of [i % 4 < 3 ? i + 1 : -1, i < 8 ? i + 4 : -1]) {
       if (next < 0) continue;
@@ -819,6 +866,16 @@ function drawWorldMap() {
       );
     }
   }
+  for (let j = 1; j < route.length; j++) {
+    g.save();
+    g.strokeStyle = "#aa682d";
+    g.lineWidth = 1.65;
+    g.beginPath();
+    g.moveTo(...positions[route[j - 1]]);
+    g.lineTo(...positions[route[j]]);
+    g.stroke();
+    g.restore();
+  }
   positions.forEach(([x, y], i) =>
     mapLandTile(
       i,
@@ -826,6 +883,7 @@ function drawWorldMap() {
       y,
       S.seen.includes(mapWorld * 12 + i),
       S.area === i && mapWorld === S.world,
+      i === waypoint,
     ),
   );
   menuButton(
@@ -860,7 +918,13 @@ function drawWorldMap() {
     13.2,
     mapWorld ? "violetSeal" : "redSeal",
   );
-  uiText("◆ Entrance", 281, 173.7, inkFaint, 8.3);
+  uiText(
+    waypoint === null ? "◆ Entrance" : "◆ Trail destination",
+    281,
+    173.7,
+    inkFaint,
+    8.3,
+  );
 }
 
 function drawDungeonMap() {
@@ -966,19 +1030,61 @@ function statusRibbon(label, y, tint = "wood") {
   uiText(label, 192, y + 8.7, uiPaper, size, "center", width - 16);
 }
 
-function interactionTag(label, center, baseline) {
-  g.font = "8px " + menuDisplay;
+function interactionTag(label, center, baseline, act) {
+  const key = actionLabel("act");
+  const keyWidth = Math.max(11, key.length * 3.8);
+  g.font = "9px " + menuDisplay;
   const caption = g.measureText(label).width;
-  const width = Math.max(45, caption + 26);
+  const width = clamp(caption + keyWidth + 13, 46, 173);
   const x = clamp(center - width / 2, 8, W - width - 8);
   const y = baseline - 10;
   kitPlate(S.world ? "slate" : "wood", x, y, width, 13.4);
-  keyCap(keyName("act"), x + 2, y + 1.5, 11, 10.1);
-  uiText(label, x + 16, y + 9.2, uiPaper, 8);
+  keyCap(key, x + 2, y + 1.5, keyWidth, 10.1);
+  uiText(
+    label,
+    x + keyWidth + 6,
+    y + 9.5,
+    uiPaper,
+    9,
+    "left",
+    width - keyWidth - 9,
+  );
+  if (act) hitBox(x, y - 2, width, 17.4, act, label);
 }
 
-function drawGameHud() {
-  const wood = S.world ? "slate" : "wood";
+function drawJourneyObjective(objective) {
+  const status = document.getElementById("journey-status");
+  status.hidden = !objective;
+  if (!objective) return;
+  const { title, detail, marker } = objective;
+  const text = title + (detail ? " — " + detail : "");
+  if (status.textContent !== text) status.textContent = text;
+  if (marker && (marker.direction || dist(marker, p) > 24)) {
+    const x = marker.x;
+    const y = marker.direction
+      ? marker.y - (marker.direction === "up" ? -6 : 7)
+      : Math.max(
+          58,
+          marker.y - ({ entrance: 48, bridge: 3 }[marker.type] ?? 28),
+        );
+    const h = opts.reduced ? 0 : Math.sin(tick / 19) * 0.9;
+    oval(x, y + h, 6.3, 5.5, "#211713dd");
+    petalGlyph(x, y + h, 4.2, "#e5aa50");
+    petalGlyph(x, y + h, 2.3, "#ffebac");
+  }
+  if (portraitControls.matches) return;
+  const boss = S.d >= 0 && scene.mobs.some((m) => m.big);
+  if (boss && !showcase) return;
+  const y = boss ? 52 : 33;
+  const width = 133;
+  kitPlate(S.world ? "slate" : "wood", 6, y, width, detail ? 24 : 17);
+  petalGlyph(14, y + 9, 2.7, uiGold);
+  uiText(title, 21, y + 11.5, uiPaper, 10.2, "left", width - 22);
+  if (detail) uiText(detail, 21, y + 20.9, uiMuted, 8.2, "left", width - 22);
+}
+
+let hudTrim = null;
+function paintHudTrim(wood, heading, subtitle) {
   kitSurface(wood, 0, 0, W, 27);
   const shade = g.createLinearGradient(0, 0, 0, 27);
   shade.addColorStop(0, "#d4a05e23");
@@ -988,22 +1094,44 @@ function drawGameHud() {
   rect(0, 25.8, W, 1.1, "#bf965baf");
   rect(0, 0, W, 0.65, "#dab37292");
   for (const x of [3.3, 107, 275, 380.7]) rivet(x, 23.2, 1);
-  const count = Math.min(14, Math.ceil(S.max / 2));
-  for (let i = 0; i < count; i++)
-    kitHeart(8.7 + i * 7.14, 8.6, clamp((S.hp - 2 * i) / 2, 0, 1));
   kitFitting("lantern", 10.3, 19.45, 13);
-  lampMeter(16, 17.55, 46, S.magic / S.mp, "#438981", "#a6e0cd");
-  if (S.max > 28) uiText(S.hp + "/" + S.max, 66, 21.3, uiPaper, 7.5);
   if (!kitArt("kit-sign", 113, 0.5, 158, 24.5))
     kitPlate(wood, 113, 1.3, 158, 23.5);
-  uiText(place(), 192, 11.8, uiPaper, 12.4, "center", 147);
+  uiText(heading, 192, 11.8, uiPaper, 12.4, "center", 147);
+  uiText(subtitle, 192, 20.2, uiGold, 7.8, "center", 142);
+}
+
+function drawGameHud() {
+  const wood = S.world ? "slate" : "wood";
+  const heading = place();
   const sub =
     S.d >= 0
-      ? rooms[S.r] + "  ·  " + D().keys + (D().keys === 1 ? " key" : " keys")
+      ? showcase
+        ? S.r === 7
+          ? "Bell passage"
+          : "Heart chamber"
+        : rooms[S.r] + "  ·  " + D().keys + (D().keys === 1 ? " key" : " keys")
       : S.world
         ? "The Gloam"
         : "Aurelia";
-  uiText(sub, 192, 20.2, uiGold, 7.8, "center", 142);
+  const key = [
+    graphics.scale,
+    wood,
+    heading,
+    sub,
+    artReady(paintedArt["kit-fittings"]),
+  ].join("/");
+  if (hudTrim?.key !== key)
+    hudTrim = {
+      key,
+      canvas: makeLayer(() => paintHudTrim(wood, heading, sub), W, 27),
+    };
+  g.drawImage(hudTrim.canvas, 0, 0, W, 27);
+  const count = Math.min(14, Math.ceil(S.max / 2));
+  for (let i = 0; i < count; i++)
+    kitHeart(8.7 + i * 7.14, 8.6, clamp((S.hp - 2 * i) / 2, 0, 1));
+  lampMeter(16, 17.55, 46, S.magic / S.mp, "#438981", "#a6e0cd");
+  if (S.max > 28) uiText(S.hp + "/" + S.max, 66, 21.3, uiPaper, 7.5);
   if (mode === "play") {
     kitSocket(285.5, 12.6, 17.6);
     for (const [x, y] of [
@@ -1019,13 +1147,15 @@ function drawGameHud() {
     const x = 310 + i * 24.4;
     kitSocket(x, 11.7, 18.9);
     if (S.slots[i] >= 0) glyph(x, 11.4, S.slots[i], 0.95);
-    keyCap(keyName(i ? "slot2" : "slot1"), x - 4.1, 19, 8.1, 6.5);
+    keyCap(actionLabel(i ? "slot2" : "slot1"), x - 5.1, 19, 10.2, 6.5);
   }
   petalGlyph(354, 8.6, 2.6, "#c18b46");
   petalGlyph(353.65, 8, 1.36, "#ffda93");
   uiText(S.cash, 361, 11.2, uiPaper, 8.8, "left", 17.5);
-  instrumentArt(10, 354, 18.2, 8);
-  uiText("×" + S.ammo, 361, 21.3, "#e8caa2", 8.3, "left", 17.5);
+  if (has(10)) {
+    instrumentArt(10, 354, 18.2, 8);
+    uiText("×" + S.ammo, 361, 21.3, "#e8caa2", 8.3, "left", 17.5);
+  }
   const timed = scene.frozen
     ? ["Stillglass", scene.frozen]
     : scene.roots
@@ -1053,8 +1183,10 @@ function drawGameHud() {
     : boss.phase === "warn"
       ? "Windup"
       : boss.big === 1 && boss.phase === "recover"
-        ? "Recovering"
-        : "";
+        ? "Open to a strike"
+        : boss.big === 1
+          ? "Guarded"
+          : "";
   uiText(
     state ? boss.name + " · " + state : boss.name,
     192,
@@ -1072,6 +1204,14 @@ function drawGameHud() {
     boss.open ? "#68945d" : "#a24c40",
     boss.open ? "#bde8a5" : "#eca57c",
   );
+  if (boss.open)
+    rect(
+      119,
+      46.8,
+      148 * clamp(boss.open / (boss.openMax || 190), 0, 1),
+      0.78,
+      "#b5e6ab",
+    );
 }
 
 function paintDialogue() {
@@ -1087,6 +1227,7 @@ function paintDialogue() {
     kitSocket(192, y, 37);
     if (!instrumentArt(S.d, 192, y, 27)) glyph(192, y, S.d, 1.8);
   }
+  if (portraitControls.matches) return;
   const portrait = portraitId(dialog.w);
   const left = portrait < 0 ? 29 : 71;
   const width = 350 - left;
@@ -1112,11 +1253,11 @@ function paintDialogue() {
     opts.fast ? dialog.s.length : Math.floor(dialog.age * 3) + 5,
   );
   uiParagraph(visible, left, y + 33, width, 9.25, 9.6, uiInk);
-  keyCap(keyName("act"), 342, 193.3, 12.4, 9.5);
+  keyCap(actionLabel("act"), 342, 193.3, 12.4, 9.5);
   hitBox(329, 184, 34, 23, finishTalk, "Continue dialogue", true);
 }
 
-function paintEnding() {
+function dawnBackdrop() {
   const dawn = paintedArt["last-bell"];
   if (artReady(dawn)) g.drawImage(dawn, 0, 0, W, H);
   else {
@@ -1129,6 +1270,10 @@ function paintEnding() {
   cover.addColorStop(0.7, "#2417189e");
   cover.addColorStop(1, "#30202400");
   rect(0, 0, W, H, cover);
+}
+
+function paintEnding() {
+  dawnBackdrop();
   kitObject(0, 45, 37, 28);
   spaced("THE LAST BELL", 67, 40, 1.12, uiGold, 7);
   uiText("Two dawns, one song", 30, 74, uiPaper, 25.5);
@@ -1147,13 +1292,44 @@ function paintEnding() {
   });
 }
 
+function paintShowcaseComplete() {
+  dawnBackdrop();
+  kitObject(0, 43, 38, 28);
+  spaced(crossingTitle.toUpperCase(), 65, 40, 1.04, uiGold, 7.4);
+  uiText("The bell answers", 30, 74, uiPaper, 27);
+  leafRule(32, 85, 172);
+  uiParagraph(
+    "Ione’s note carries through the veil. On the other side, Merin lights the first lamp in Bellwick.",
+    32,
+    102,
+    170,
+    10.2,
+    11.8,
+    uiPaper,
+  );
+  uiText("Chapter complete · " + showcase.finishedTime, 32, 140, uiGold, 9.5);
+  menuButton("Play again", 32, 152, 139, startShowcase, sel === 0, 18, {
+    center: true,
+  });
+  menuButton(
+    "Full journey",
+    32,
+    176,
+    139,
+    () => leaveShowcase(true),
+    sel === 1,
+    18,
+    { center: true },
+  );
+}
+
 function mountTouchShell() {
   const root = document.querySelector("#touch");
   const strip = document.querySelector("#touch-actions");
   const buttons = strip.querySelector(".touch-menu-buttons");
   const heading = strip.querySelector(".touch-menu-title");
   const excerpt = strip.querySelector(".touch-menu-excerpt");
-  const portrait = matchMedia("(pointer: coarse) and (orientation: portrait)");
+  const mapButton = root.querySelector("[data-action=map]");
   const quickSlots = [...root.querySelectorAll("[data-action^=slot]")];
   let list = [],
     signature = "",
@@ -1161,6 +1337,12 @@ function mountTouchShell() {
 
   function render() {
     root.hidden = mode !== "play";
+    const mapLabel = showcase ? "Quest journal" : "World map";
+    if (mapButton.title !== mapLabel) {
+      mapButton.title = mapLabel;
+      mapButton.setAttribute("aria-label", mapLabel);
+      mapButton.firstElementChild.textContent = showcase ? "Notes" : "Map";
+    }
     const currentLoadout = S.slots.join("/");
     if (!root.hidden && loadout !== currentLoadout) {
       loadout = currentLoadout;
@@ -1176,7 +1358,7 @@ function mountTouchShell() {
       });
     }
     if (
-      !portrait.matches ||
+      !portraitControls.matches ||
       mode === "play" ||
       (mode === "menu" && menu === "settings")
     ) {
@@ -1191,9 +1373,13 @@ function mountTouchShell() {
           ? dialog.w
           : mode === "ending"
             ? "Two dawns, one song"
-            : mode === "defeat"
-              ? "The lantern gutters"
-              : "Veilbound";
+            : mode === "showcaseComplete"
+              ? "The bell answers"
+              : mode === "defeat"
+                ? "The lantern gutters"
+                : crossingTitleScreen
+                  ? crossingTitle
+                  : "Veilbound";
     const text =
       mode === "talk"
         ? dialog.s
@@ -1201,11 +1387,18 @@ function mountTouchShell() {
           ? "Press a key for " + bindingLabels[bindAction]
           : "";
     const panel = mode === "menu" ? menu : mode;
-    list = hot.filter(
-      (entry) =>
-        entry.label &&
-        !(mode === "menu" && menu === "pause" && entry.label === "Close menu"),
-    );
+    list =
+      mode === "talk"
+        ? [{ label: "Continue dialogue", fn: finishTalk, active: true }]
+        : hot.filter(
+            (entry) =>
+              entry.label &&
+              !(
+                mode === "menu" &&
+                menu === "pause" &&
+                entry.label === "Close menu"
+              ),
+          );
     if (panel === "inventory") {
       const tools = new Set(S.items.map((item) => toolsList[item]));
       list = [

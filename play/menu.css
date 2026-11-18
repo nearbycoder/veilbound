@@ -223,18 +223,41 @@ main {
   }
 }
 @media (pointer: coarse) and (orientation: portrait) {
+  body {
+    --portrait-scene-top: 4svh;
+    --portrait-scene-edge: calc(var(--portrait-scene-top) + 56.25vw);
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: var(--portrait-scene-edge) 0 0;
+    pointer-events: none;
+    background:
+      linear-gradient(#100c12e8 0%, #1210258f 50%, #100c12eb 100%),
+      url("./art/moonlit-valley.webp") 67% center / cover;
+  }
   main {
     align-self: start;
-    margin-top: 4svh;
+    margin-top: var(--portrait-scene-top);
   }
   #touch {
-    bottom: max(9svh, env(safe-area-inset-bottom));
+    bottom: max(6svh, env(safe-area-inset-bottom));
+    padding: 10px 8px;
+    border: 3px double #a27649bf;
+    border-radius: 5px;
+    background:
+      linear-gradient(#21130de0, #1c100de8),
+      var(--hide-texture) center / 215px 215px;
+    box-shadow: 0 12px 30px #08050ac7;
   }
   #touch-actions:not([hidden]) {
     display: block;
     position: fixed;
-    inset: calc(4svh + 56.25vw + 12px) 14px
-      max(15px, env(safe-area-inset-bottom));
+    inset: calc(var(--portrait-scene-edge) + 12px) 14px auto;
+    max-height: calc(
+      100dvh - var(--portrait-scene-edge) -
+        max(27px, env(safe-area-inset-bottom) + 12px)
+    );
     padding: 13px 13px 17px;
     overflow: auto;
     overscroll-behavior: contain;
@@ -497,6 +520,50 @@ main {
 .pref-toggle {
   display: grid;
   gap: 3px;
+}
+.screen-reader-only,
+.journey-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@media (pointer: coarse) and (orientation: portrait) {
+  .journey-status {
+    position: fixed;
+    top: calc(var(--portrait-scene-edge) + clamp(10px, 2svh, 20px));
+    left: max(14px, env(safe-area-inset-left));
+    right: max(14px, env(safe-area-inset-right));
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 10px 15px;
+    clip-path: none;
+    white-space: normal;
+    border: 3px double #ad8052;
+    background: #e7c290 var(--paper-texture) center / 270px 270px;
+    color: #3a2418;
+    font: 700 clamp(17px, 4.5vw, 22px) / 1.2 var(--serif);
+    box-shadow: 0 3px 16px #08050aa8;
+  }
+}
+@media (pointer: coarse) and (orientation: portrait) and (max-height: 600px) {
+  body {
+    --portrait-scene-top: max(6px, env(safe-area-inset-top));
+  }
+  #touch {
+    bottom: max(8px, env(safe-area-inset-bottom));
+    padding-block: 5px;
+  }
+  #touch section {
+    grid-template-columns: repeat(3, clamp(36px, 10.5vw, 47px));
+  }
+  .journey-status {
+    top: calc(var(--portrait-scene-edge) + 8px);
+    padding-block: 6px;
+  }
 }
 .pref-range > span,
 .pref-toggle,

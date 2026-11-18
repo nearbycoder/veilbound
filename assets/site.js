@@ -114,7 +114,7 @@ const notes = [
     "Look for the Emberglass Foundry among the kilns and broken rock.",
     "Climb to Skyglass Observatory. Its Prism Lens brings hidden paths into view.",
     "Wind turns the mill above the planted rows of Westwind Fields.",
-    "Find Merin on the village green. Ring the bell to restore your supplies before setting out for Mossbell Sanctuary.",
+    "Find Merin on the village green. A brief trip to Hushwick starts the trail that leads to Mossbell Sanctuary.",
     "Follow the lanes between the grave markers east of Bellwick Village.",
     "The road broadens into a paved court beneath the royal towers.",
     "Wind-shaped dunes mark the southwest corner of the kingdom.",
@@ -283,7 +283,7 @@ document.addEventListener("keydown", (event) => {
 const speech = document.getElementById("speech");
 const lines = [
   speech.textContent,
-  "“Take her satchel by the village green, then head northwest to Mossbell.”",
+  "“Take her satchel, Rowan. Listen to what answers from the other side.”",
 ];
 const advance = document.getElementById("advance");
 advance.hidden = false;

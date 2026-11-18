@@ -372,7 +372,7 @@ try {
   }
   await ev("localStorage.clear();saved=false;sel=0");
   await cap("title");
-  await run("test.start()");
+  const openingChecks = await run("test.start()");
   await cap("aurelia");
   await run("openMenu('inventory')");
   await cap("burst-satchel");
@@ -423,8 +423,13 @@ try {
     );
   await ev(verifyArtwork.toString());
   await ev(extraChecks.toString());
-  const checks = [...settingsChecks, ...(await run("extraChecks()"))];
+  const checks = [
+    ...settingsChecks,
+    ...openingChecks,
+    ...(await run("extraChecks()")),
+  ];
   checks.push(...(await run("verifyArtwork()")));
+  checks.push(...(await run("test.playShowcase()")));
   checks.push(
     "Rendered 120 dungeon rooms, 24 side-cave variants and every canvas menu for visual review",
   );
@@ -919,7 +924,10 @@ function campaignController() {
       held.clear();
       if (mode === "talk" && !S.done.includes(d)) talk();
     }
-    assert(S.done.includes(d), "boss failure " + mode + " " + S.hp);
+    assert(
+      showcase ? mode === "showcaseComplete" : S.done.includes(d),
+      "boss failure " + mode + " " + S.hp,
+    );
   }
   return {
     frame,
@@ -938,7 +946,12 @@ function campaignController() {
       localStorage.clear();
       start(false);
       talk();
-      objact("guide");
+      assert(
+        near()?.type === "guide" &&
+          journeyObjective()?.marker?.type === "guide",
+        "Merin’s opening prompt",
+      );
+      act("act");
       talk();
       assert(has(10), "satchel");
       objact("bell");
@@ -946,13 +959,107 @@ function campaignController() {
       let hidden = ob("rift");
       walk(hidden.x, hidden.y + 4);
       act("act");
-      assert(mode === "talk" && S.world === 0, "early glimpse");
+      assert(
+        mode === "play" && S.world === 1 && scene.exits.length === 0,
+        "early playable glimpse",
+      );
+      assert(realmTransition?.before || opts.reduced, "veil transition");
+      objact("guide");
       talk();
+      assert(
+        S.flags.heardEcho && journeyObjective().marker.type === "rift",
+        "Gloam introduction",
+      );
+      objact("rift");
+      assert(
+        S.world === 0 && journeyObjective().marker.direction === "left",
+        "route to Mossbell",
+      );
       for (let j = 0; j < 6; j++) {
         cast(10);
         frame(30);
       }
       assert(S.ammo === 0, "empty charges");
+      return [
+        "Merin offers the satchel from Rowan’s starting position",
+        "The first crossing reaches Hushwick, shows Ione’s clue, and keeps the outer roads sealed",
+        "Returning from the Gloam lights the west road toward Mossbell",
+      ];
+    },
+    playShowcase() {
+      const campaign = localStorage.getItem(KEY);
+      startShowcase();
+      talk();
+      assert(
+        showcase && journeyObjective().marker.type === "bell",
+        "chapter begins at the bell",
+      );
+      act("map");
+      assert(
+        mode === "menu" && menu === "journal",
+        "chapter shortcut opens the journal",
+      );
+      act("map");
+      assert(mode === "play", "chapter journal shortcut closes the journal");
+      objact("bell");
+      objact("rift");
+      assert(
+        showcase.rung && S.world === 1,
+        "the bell opens the chapter crossing",
+      );
+      objact("entrance");
+      assert(
+        S.d === 5 && S.r === 7 && locked(11),
+        "Choir passage starts sealed",
+      );
+      act("slot2");
+      assert(
+        bridged(192, 110) && !bridged(220, 110),
+        "the chime reveals the bridge lane",
+      );
+      walk(192, 109);
+      frame(scene.light + 3);
+      assert(
+        p.y > 130 && mode === "play",
+        "a fading bridge returns Rowan to shore",
+      );
+      act("slot2");
+      walk(192, 81);
+      for (const receiver of scene.obj.filter((o) => o.type === "target"))
+        strikeTarget(receiver, 0);
+      assert(
+        showcaseSealsReady() && !locked(11),
+        "both real disc hits unlock the heart chamber",
+      );
+      gate(11);
+      talk();
+      assert(S.cp[3] === 11, "guardian checkpoint reached");
+      S.hp = 1;
+      p.inv = 0;
+      damage(p.x, p.y);
+      assert(mode === "defeat", "a lethal hit ends the attempt");
+      act("act");
+      assert(
+        S.hp === S.max && S.r === 11 && showcaseSealsReady(),
+        "retry retains the heart chamber checkpoint and seals",
+      );
+      boss();
+      assert(
+        mode === "showcaseComplete" && showcase.finishedTime,
+        "chapter victory",
+      );
+      assert(
+        localStorage.getItem(KEY) === campaign,
+        "chapter saves must be isolated",
+      );
+      leaveShowcase(true);
+      start(true);
+      assert(S.end && !showcase, "campaign resumes after the chapter");
+      return [
+        "The First Crossing plays from its opening bell through both realms, the bridge, the sealed door and the guardian",
+        "An expired bridge returns Rowan to the bank, and defeat resumes at the latest chapter checkpoint",
+        "Chapter journal, checkpoint and ending work while the campaign save resumes intact",
+      ];
     },
     cross() {
       travel(5);
@@ -1250,6 +1357,14 @@ async function extraChecks() {
   check(p.atk > 0, "rebound attack key");
   opts.keys = structuredClone(baseKeys);
   soundSave();
+  p.cd = 3;
+  p.atk = 0;
+  hitstop = 2;
+  fire("keydown", "KeyJ");
+  step();
+  fire("keyup", "KeyJ");
+  test.frame(4);
+  check(p.atk > 0, "a tap during hitstop becomes a strike when recovery ends");
   let padBtn = document.querySelector("#pad button[aria-label=right]"),
     atkBtn = document.querySelector("#buttons button[aria-label=attack]");
   function pressPointer(el, type, id) {
@@ -1267,21 +1382,34 @@ async function extraChecks() {
   pressPointer(padBtn, "pointerdown", 11);
   pressPointer(atkBtn, "pointerdown", 12);
   check(held.has("right") && held.has("attack"), "simultaneous touch actions");
+  pressPointer(padBtn, "pointerdown", 13);
   pressPointer(atkBtn, "pointerup", 12);
   pressPointer(padBtn, "pointerup", 11);
+  check(held.has("right"), "a second pointer keeps a shared control held");
+  pressPointer(padBtn, "pointerup", 13);
   HTMLElement.prototype.setPointerCapture = oldCap;
   check(!held.has("right"), "touch release");
-  let oldGp = navigator.getGamepads.bind(navigator),
-    axes = [1, 0];
+  const axes = [1, 0],
+    buttons = [{ pressed: true }];
   Object.defineProperty(navigator, "getGamepads", {
     configurable: true,
-    value: () => [{ axes, buttons: [{ pressed: true }] }],
+    value: () => [null, { axes, buttons }],
   });
   gamepad();
   check(
     held.has("right") && held.has("attack"),
     "simultaneous gamepad actions",
   );
+  buttons[0].pressed = false;
+  buttons[9] = { pressed: true };
+  step();
+  step();
+  check(mode === "menu" && menu === "pause", "holding Start opens Pause once");
+  buttons[9].pressed = false;
+  step();
+  buttons[9].pressed = true;
+  step();
+  check(mode === "play", "a second Start press resumes play");
   delete navigator.getGamepads;
   gamepad();
   check(!held.has("right"), "disconnected gamepad release");

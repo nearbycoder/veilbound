@@ -1,12 +1,14 @@
 # Veilbound · Echoes of the Hollow Crown
 
-[Visit the official site](https://nearbycoder.github.io/veilbound/) or [play in your browser](https://nearbycoder.github.io/veilbound/play/).
+[Play The First Crossing](https://nearbycoder.github.io/veilbound/play/index.html?chapter=crossing) · [Play the full game](https://nearbycoder.github.io/veilbound/play/index.html?launch=1) · [Official site](https://nearbycoder.github.io/veilbound/)
 
-For offline play, open [play/index.html](play/index.html) in a browser and choose **Begin journey**. The game runs from disk. Open **Settings** from the title screen, pause menu, or the sliders icon beside your equipped items. The scene preview shows graphics changes as you make them.
+*The First Crossing* follows the bell from Bellwick to Hushwick and into the Drowned Choir. Chapter checkpoints stay in the current session. Choose **Full journey** to reach the ten-dungeon campaign and its browser saves.
+
+For offline play, extract the [game archive](https://nearbycoder.github.io/veilbound/downloads/veilbound.zip) and open [play/index.html](play/index.html) in a browser. Open **Settings** from the title screen, pause menu, or the sliders icon beside your equipped items. The scene preview shows graphics changes as you make them.
 
 Open **Settings → Graphics** and select **Ultra 4K** for a 3840 × 2160 canvas. The game starts on High at 1920 × 1080. Balanced renders at 1152 × 648, and Classic renders at 384 × 216. Use the fullscreen button on the title screen or in play, or choose **Enter fullscreen** in Graphics. Brightness and atmospheric effects can be adjusted independently.
 
-**Audio** has a master fader and separate music and effects levels. Choose **Enable sound & preview** to hear the mix. Settings are saved in the browser separately from campaign progress.
+**Audio** starts on your first input. Settings include a master fader and separate music and effects levels. Choose **Preview mix** to hear the current levels. Your preferences save separately from campaign progress.
 
 | Action | Default controls |
 | --- | --- |
@@ -16,7 +18,7 @@ Open **Settings → Graphics** and select **Ultra 4K** for a 3840 × 2160 canvas
 | Use equipped instruments | Q and E |
 | Equipment / map / pause | Tab / M / Escape |
 
-Pause to open the quest journal, adjust controls, or export a save. The map and journal open in Rowan’s vellum field book, and equipped tools sit in a stitched leather roll. Bell towers restore supplies and link discovered destinations. On a portrait phone, full-size menu actions sit beneath the game view.
+Pause to open the quest journal, adjust controls, or export a save. The campaign map marks the destination and the next road. You can turn **Follow the trail** off in Gameplay settings. Bell towers restore supplies and link discovered destinations. On a portrait phone, full-size menu actions sit beneath the game view.
 
 The game renders in Canvas 2D. Painted textures follow the roads and dungeon layouts. Each of the 24 overworld areas has its own palette and landmark art. The ten dungeons have individual entrances, materials, warders, and guardians. All 28 regular enemies use painted sprites, with their windups, attacks, and recovery poses animated in the renderer. Dungeon passages have directional stonework and gates that follow each room’s lock state. The [art pack](play/art/README.md) documents the atlases and generation prompts.
 
@@ -24,11 +26,11 @@ The [overworld gallery](verification/environment-gallery.png) pairs each region 
 
 View the [Orchard Weald fight](verification/orchard-4k.webp) and [Frostbound Reliquary’s Great Lock](verification/dungeon-4k.webp) at 3840 × 2160.
 
-Run `node verification/check.mjs` with Node 22+ and Chrome installed to play through the campaign headlessly, run the interaction, artwork, and audio checks, and regenerate the captures and [verification results](verification/results.json). Set `CHROME_PATH` to select a different Chrome executable.
+Run `node verification/check.mjs` with Node 22+ and Chrome installed to play through the campaign and The First Crossing, check input, artwork, settings and audio, and regenerate the captures and [verification results](verification/results.json). Set `CHROME_PATH` to select a different Chrome executable. Run `sh scripts/package-game.sh` to rebuild the offline ZIP.
 
 GitHub Pages publishes the repository root from `main`. The marketing site lives in [index.html](index.html), and its Play links open the standalone game in [play/](play/).
 
-The homepage opens on the game’s moonlit bell scene. Its Play command starts a new journey or resumes a valid local save. The realm slider compares the same view of Bellwick and Hushwick, and the gameplay reel tours two overworld areas and two heart chambers. The journal pairs all twelve regions of Aurelia with their Gloam counterparts and shows the instruments from the game renderer.
+The homepage opens on the game’s moonlit bell scene. **Play The First Crossing** opens the chapter, and **Full game** begins or resumes the campaign. The realm slider pairs Bellwick and Hushwick. The field journal shows all 24 regions and the instruments from the game renderer. The [BIG Festival entry packet](SUBMISSION.md) collects the build links, trailer, and AI disclosure.
 
 <details>
 <summary>Earlier promotional artwork</summary>
