@@ -18,7 +18,7 @@ For offline play, open [play/index.html](play/index.html) in a browser and choos
 
 Pause to open the quest journal, adjust controls, or export a save. Bell towers restore supplies and link discovered destinations.
 
-The characters, creatures, equipment, and puzzle mechanisms are modeled in the HTML file. The game lights these meshes and caches their poses at the selected rendering quality. The [model gallery](verification/model-gallery.png) shows the cast and equipment at a larger scale. The [environment gallery](verification/environment-gallery.png) pairs each region of Aurelia with its counterpart in the Gloam.
+The entire game draws its artwork in Canvas 2D. Winding roads follow the actual exits, water follows riverbeds and shorelines, and each dungeon has its own painted materials, lighting, and floor emblems. Rowan, the guardians, equipment, and scenery are built from code-drawn meshes and cached at the selected rendering quality. Aurelia and the Gloam share an original bell motif with different arrangements. The [model gallery](verification/model-gallery.png) shows the cast and equipment at a larger scale. The [environment gallery](verification/environment-gallery.png) pairs each region of Aurelia with its counterpart in the Gloam.
 
 Run `node verification/check.mjs` with Node 22+ and Chrome installed to play through the campaign headlessly, run the interaction, artwork, and audio checks, and regenerate the captures and [verification results](verification/results.json). Set `CHROME_PATH` to select a different Chrome executable.
 

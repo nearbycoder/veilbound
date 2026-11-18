@@ -79,6 +79,7 @@
     "Left and right sword poses render independently",
     "Opened treasure chest has a separate silhouette",
     "All 24 overworlds render with a bounded pose cache",
+    "Painted roads follow actual exits and water textures follow the water and riverbed geometry",
     "Layered music and tool effects produce a non-silent Web Audio render",
     "Muted music and effects produce digital silence",
     "Music and effects faders isolate their channels and mute a sustained note",

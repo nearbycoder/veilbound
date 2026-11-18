@@ -1447,6 +1447,12 @@ async function verifyArtwork() {
         sprite("opened", () => propModel("chest", true)),
       "Opened treasure chest has a separate silhouette",
     );
+    const boundaries = {
+      left: [0, 119],
+      right: [383, 119],
+      up: [192, 27],
+      down: [192, 215],
+    };
     for (let w = 0; w < 2; w++)
       for (let a = 0; a < 12; a++) {
         S.area = a;
@@ -1456,10 +1462,35 @@ async function verifyArtwork() {
         S.cave = "";
         newRoom(192, 149);
         paint();
+        for (const [direction, position] of Object.entries(boundaries))
+          if (
+            trailAt(...position) !==
+            scene.exits.some((exit) => exit.dir === direction)
+          )
+            throw Error(
+              `Trail differs from room exits at ${w}/${a}/${direction}`,
+            );
+        if (scene.water.length) {
+          const layer = scene.riverArt.map
+            .getContext("2d")
+            .getImageData(0, 0, W, H).data;
+          const wet = (x, y) => scene.water.some((box) => inside(x, y, box));
+          // The river texture must follow all water and dry-riverbed footprints.
+          for (let y = 29; y < H; y += 3)
+            for (let x = 0; x < W; x += 3)
+              if ((layer[(y * W + x) * 4 + 3] !== 0) !== wet(x, y))
+                throw Error(
+                  `Water texture differs from geography at ${w}/${a}/${x},${y}`,
+                );
+        }
       }
     ok(
       actorAtlas.size <= 384,
       "All 24 overworlds render with a bounded pose cache",
+    );
+    ok(
+      true,
+      "Painted roads follow actual exits and water textures follow the water and riverbed geometry",
     );
     // Sample the real mixer through an analyser. Chrome's speaker output is muted.
     async function sample(volume) {
