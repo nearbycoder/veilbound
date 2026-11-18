@@ -105,7 +105,7 @@ dialog.addEventListener("close", () => {
   reelTrigger?.focus({ preventScroll: true });
 });
 
-const artworkRevision = "?v=bellwarden";
+const artworkRevision = "?v=ultra";
 const realmNames = ["Aurelia", "The Gloam"];
 const notes = [
   [

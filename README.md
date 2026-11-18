@@ -4,7 +4,7 @@
 
 For offline play, open [play/index.html](play/index.html) in a browser and choose **Begin journey**. The game runs from disk. Open **Settings** from the title screen, pause menu, or the sliders icon beside your equipped items. The scene preview shows graphics changes as you make them.
 
-**Graphics** starts on High at 1920 × 1080, with detailed terrain, shaded models, and cast shadows. Balanced renders at 1152 × 648. Classic uses the original 384 × 216 pixel grid. Brightness and atmospheric effects can be adjusted independently.
+Open **Settings → Graphics** and select **Ultra 4K** for a 3840 × 2160 canvas. The game starts on High at 1920 × 1080. Balanced renders at 1152 × 648, and Classic renders at 384 × 216. Use the fullscreen button on the title screen or in play, or choose **Enter fullscreen** in Graphics. Brightness and atmospheric effects can be adjusted independently.
 
 **Audio** has a master fader and separate music and effects levels. Choose **Enable sound & preview** to hear the mix. Settings are saved in the browser separately from campaign progress.
 
@@ -18,9 +18,11 @@ For offline play, open [play/index.html](play/index.html) in a browser and choos
 
 Pause to open the quest journal, adjust controls, or export a save. The map and journal open in Rowan’s vellum field book, and equipped tools sit in a stitched leather roll. Bell towers restore supplies and link discovered destinations. On a portrait phone, full-size menu actions sit beneath the game view.
 
-The game renders in Canvas 2D. Painted textures follow the actual roads and dungeon layouts. Each of the 24 overworld areas has its own palette and landmark art, and each dungeon combines its materials and guardian with lighting and decoration keyed to the room’s purpose. Rowan, the village cast, guardians, and instruments use painted sprites. The [art pack](play/art/README.md) documents the atlases and generation prompts.
+The game renders in Canvas 2D. Painted textures follow the roads and dungeon layouts. Each of the 24 overworld areas has its own palette and landmark art. The ten dungeons have individual entrances, materials, warders, and guardians. All 28 regular enemies use painted sprites, with their windups, attacks, and recovery poses animated in the renderer. Dungeon passages have directional stonework and gates that follow each room’s lock state. The [art pack](play/art/README.md) documents the atlases and generation prompts.
 
 The [overworld gallery](verification/environment-gallery.png) pairs each region of Aurelia with its Gloam counterpart. The [room gallery](verification/room-gallery.webp) shows all 120 dungeon rooms and 24 cave variants. The [menu gallery](verification/menu-gallery.webp), [settings capture](verification/settings.png), and [portrait menu capture](verification/mobile-menu.png) show the interface in play.
+
+View the [Orchard Weald fight](verification/orchard-4k.webp) and [Frostbound Reliquary’s Great Lock](verification/dungeon-4k.webp) at 3840 × 2160.
 
 Run `node verification/check.mjs` with Node 22+ and Chrome installed to play through the campaign headlessly, run the interaction, artwork, and audio checks, and regenerate the captures and [verification results](verification/results.json). Set `CHROME_PATH` to select a different Chrome executable.
 

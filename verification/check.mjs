@@ -86,7 +86,7 @@ try {
     url: pathToFileURL(path.join(project, "play", "index.html")).href,
   });
   async function waitForGame() {
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 120; i++) {
       await delay(50);
       if (
         await ev(
@@ -163,13 +163,13 @@ try {
     );
     await click("[name=quality][value=classic]");
     const classic = await ev(
-      'paint();({w:cv.width,h:cv.height,room:titleCache.width,tile:actorAtlas.get("preferences/gate").tile.width,preview:document.querySelector("#pref-art").width})',
+      'paint();({w:cv.width,h:cv.height,room:titleCache.width,preview:document.querySelector("#pref-art").width})',
     );
     await click("[name=quality][value=balanced]");
     const balanced = await ev("paint();[cv.width,cv.height]");
     await click("[name=quality][value=high]");
     const high = await ev(
-      'paint();[titleCache.width,actorAtlas.get("preferences/gate").tile.width,document.querySelector("#pref-art").width]',
+      'paint();[titleCache.width,document.querySelector("#pref-art").width]',
     );
     assert(
       classic.w === 384 &&
@@ -178,10 +178,42 @@ try {
         balanced[0] === 1152 &&
         balanced[1] === 648 &&
         high[0] === 1920 &&
-        high[1] > classic.tile * 1.9 &&
-        high[2] === classic.preview * 5,
-      "Quality presets rebuild the display, scenery, model atlas and preview at their own resolution",
+        high[1] === classic.preview * 5,
+      "Quality presets rebuild the display, scenery and preview at their own resolution",
     );
+    await click("[name=quality][value=ultra]");
+    assert(
+      await ev(
+        'paint();opts.quality==="ultra" && cv.width===3840 && cv.height===2160 && titleCache.width===3840 && vistaLayer.width===2480 && JSON.parse(localStorage.getItem(KEY+".settings")).quality==="ultra"',
+      ),
+      "Ultra 4K renders a 3840 × 2160 framebuffer and saves the preference",
+    );
+    await click("[name=quality][value=high]");
+    const fullscreenState = async (expected) => {
+      for (let i = 0; i < 30; i++) {
+        if (
+          await ev(
+            `isFullscreen()===${expected} && fullscreenSetting.textContent.startsWith("${expected ? "Exit" : "Enter"}")`,
+          )
+        )
+          return true;
+        await delay(40);
+      }
+      return false;
+    };
+    await call("Emulation.clearDeviceMetricsOverride");
+    await call("Page.bringToFront");
+    await click("[data-command=fullscreen]");
+    assert(
+      await fullscreenState(true),
+      "Graphics settings enter browser fullscreen",
+    );
+    await click("[data-command=fullscreen]");
+    assert(
+      await fullscreenState(false),
+      "Graphics settings remain interactive in fullscreen",
+    );
+    await metrics(1120, 700);
     await click("#pref-brightness", 0.67);
     assert(
       await ev(
@@ -273,6 +305,26 @@ try {
       direct && (await ev('mode==="play" && !preferences.open')),
       "The in-game settings shortcut returns directly to play",
     );
+    const playing = await ev("[S.area,p.x,p.y]");
+    await call("Emulation.clearDeviceMetricsOverride");
+    await click("#fullscreen-button");
+    assert(
+      (await fullscreenState(true)) &&
+        (await ev(`(() => {
+          const { width, height } = cv.getBoundingClientRect();
+          return Math.abs(width / height - 16 / 9) < 0.01 &&
+            (Math.abs(width - innerWidth) < 1 || Math.abs(height - innerHeight) < 1);
+        })()`)),
+      "The game view fills native fullscreen at a 16:9 aspect ratio",
+    );
+    await click("#fullscreen-button");
+    assert(
+      (await fullscreenState(false)) &&
+        JSON.stringify(playing) ===
+          JSON.stringify(await ev("[S.area,p.x,p.y]")),
+      "Fullscreen exit preserves the current room and player position",
+    );
+    await metrics(1120, 700);
     // Reload an existing preference payload that predates graphics and the master fader.
     await ev(
       'localStorage.setItem(KEY+".settings",JSON.stringify({sound:false,sfx:19,music:64,fast:true,keys:{attack:["KeyB"]}}))',
@@ -1345,14 +1397,14 @@ function gallery() {
   for (let i = 0; i < 10; i++) {
     let x = 82 + (i % 5) * 151,
       y = 570 + Math.floor(i / 5) * 54;
-    stamp("gallery-warden" + i, x, y, 1.2, 1, () => wardenModel(i, 0, "warn"));
+    foeSprite(i, true, x, y, 1, "warn");
     txt(minis[i], x, y + 12, "#d1c8b2", 7, "center");
   }
   section(674, "Creatures of Aurelia and the Gloam");
   for (let i = 0; i < 28; i++) {
     let x = 65 + (i % 7) * 106,
       y = 726 + Math.floor(i / 7) * 52;
-    stamp("gallery-small" + i, x, y, 1.45, 1, () => smallModel(i, 0, "stalk"));
+    foeSprite(i, false, x, y);
     txt(enemies[i], x, y + 12, "#d1c8b2", 7, "center");
   }
   section(931, "Lantern instruments and treasures");
@@ -1366,10 +1418,8 @@ function gallery() {
   for (let d = 0; d < 10; d++) {
     const x = 82 + (d % 5) * 151,
       y = 1102 + Math.floor(d / 5) * 86;
-    stamp("gallery-entrance" + d, x - 16, y, 1.28, 1, () => entranceSculpt(d));
-    stamp("gallery-control" + d, x + 26, y, 1.4, 1, () =>
-      mechanismModel(d, false, true, 1),
-    );
+    entranceSprite(d, x - 16, y, 52);
+    mechanismSprite(d, false, x + 28, y, 26, true);
     txt(names[d], x, y + 15, "#eddbba", 8, "center");
     txt(mechanisms[d], x, y + 27, "#adbea9", 7, "center");
   }
@@ -1592,22 +1642,28 @@ async function verifyArtwork() {
   }
   try {
     let ids = new Set();
+    function cutout(draw) {
+      return makeLayer(
+        () => {
+          if (!draw()) throw Error("Painted sprite sheet is unavailable");
+        },
+        68,
+        64,
+      ).toDataURL();
+    }
     for (let j = 0; j < 28; j++)
-      ids.add(sprite("mob" + j, () => smallModel(j, 1, "warn")));
-    ok(
-      ids.size === 28,
-      "28 distinct enemy silhouettes render inside atlas bounds",
-    );
+      ids.add(cutout(() => foeSprite(j, false, 34, 54, 1, "warn")));
+    ok(ids.size === 28, "28 distinct painted enemy silhouettes render");
     for (let d = 0; d < 10; d++) {
-      sprite("warder" + d, () => wardenModel(d, 1, "warn"));
+      ids.add(cutout(() => foeSprite(d, true, 34, 54, 1, "warn")));
       sprite("boss" + d, () => sovereign(d, 1, "warn", false, false));
-      sprite("gate" + d, () => entranceSculpt(d));
-      sprite("mechanism" + d, () => mechanismModel(d, true, true, 1));
+      cutout(() => entranceSprite(d, 34, 54));
+      cutout(() => mechanismSprite(d, false, 34, 54));
       sprite("tool" + d, () => itemModel(d));
     }
     ok(
-      true,
-      "All ten dungeon entrances, warders, bosses, receivers and treasury instruments render without clipping",
+      ids.size === 38,
+      "All ten painted dungeon entrances, warders and mechanisms load alongside bosses and instruments",
     );
     let actions = new Set();
     for (let a of ["idle", "walk", "shield", "attack", "dodge"])
@@ -1650,9 +1706,46 @@ async function verifyArtwork() {
       "Painted Rowan walks, dodges, guards and strikes in every direction with a distinct Dawnsteel blade",
     );
     ok(
-      sprite("closed", () => propModel("chest", false)) !==
-        sprite("opened", () => propModel("chest", true)),
-      "Opened treasure chest has a separate silhouette",
+      cutout(() => puzzleProp({ type: "chest", x: 34, y: 54 }, false)) !==
+        cutout(() => puzzleProp({ type: "chest", x: 34, y: 54 }, true)),
+      "Opened treasure chest has a separate painted silhouette",
+    );
+    const gates = [
+      ["up", 192, 43],
+      ["down", 192, 202],
+      ["left", 10, 119],
+      ["right", 374, 119],
+    ];
+    const wallMask = makeLayer(() => {
+      clipChamberWalls(gates.map(([dir]) => ({ dir })));
+      rect(0, 25, W, H - 25, "#fff");
+    });
+    const alphaAt = (x, y) =>
+      wallMask
+        .getContext("2d")
+        .getImageData(x * graphics.scale, y * graphics.scale, 1, 1).data[3];
+    ok(
+      gates.every(([, x, y]) => alphaAt(x, y) === 0) &&
+        alphaAt(160, 40) === 255 &&
+        alphaAt(4, 151) === 255,
+      "Wall masonry leaves a clean aperture at each of the four doorway orientations",
+    );
+    S.d = 0;
+    S.r = 2;
+    S.cave = "";
+    newRoom(192, 145);
+    const gateFrames = (unlocked) => {
+      D().flags.unlock = D().flags.p2 = unlocked;
+      return gates.map(([dir]) =>
+        makeLayer(() => passageGate({ dir, to: 4 }, S.d)).toDataURL(),
+      );
+    };
+    const openGates = gateFrames(true);
+    const lockedGates = gateFrames(false);
+    ok(
+      new Set(openGates).size === 1 &&
+        lockedGates.every((frame, i) => frame !== openGates[i]),
+      "Every directional gate renders in its lock state and clears when the room unlocks",
     );
     const boundaries = {
       left: [0, 119],

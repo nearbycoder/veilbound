@@ -47,6 +47,10 @@ main {
   aspect-ratio: 16 / 9;
   box-shadow: 0 18px 78px #060408cf;
 }
+:root:fullscreen,
+:root:fullscreen body {
+  background: #100c12;
+}
 #game {
   display: block;
   width: 100%;
@@ -72,6 +76,75 @@ main {
 #hud-settings:focus-visible {
   outline: 2px solid #ffe0a1;
   outline-offset: -3px;
+}
+#fullscreen-button {
+  position: absolute;
+  top: calc(12.5% + clamp(5px, 1vh, 16px));
+  right: clamp(5px, 1vw, 18px);
+  display: grid;
+  place-items: center;
+  width: clamp(32px, 4.6vmin, 48px);
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid #c8a269b8;
+  border-radius: 3px;
+  background:
+    linear-gradient(#33231ed9, #160f0cdb),
+    var(--wood-texture) center / cover;
+  color: #f6d39a;
+  box-shadow: 0 2px 8px #0b0709a3;
+  cursor: pointer;
+}
+#fullscreen-button span {
+  width: 46%;
+  aspect-ratio: 1;
+  border: 2px solid currentColor;
+  clip-path: polygon(
+    0 0,
+    36% 0,
+    36% 31%,
+    64% 31%,
+    64% 0,
+    100% 0,
+    100% 36%,
+    69% 36%,
+    69% 64%,
+    100% 64%,
+    100% 100%,
+    64% 100%,
+    64% 69%,
+    36% 69%,
+    36% 100%,
+    0 100%,
+    0 64%,
+    31% 64%,
+    31% 36%,
+    0 36%
+  );
+}
+#fullscreen-button.is-fullscreen span {
+  width: 35%;
+  transform: rotate(45deg);
+}
+#fullscreen-button:hover {
+  color: #fff1c9;
+  background-color: #916a45;
+  filter: brightness(1.28);
+}
+#fullscreen-button:focus-visible {
+  outline: 2px solid #ffe0a1;
+  outline-offset: 2px;
+}
+#fullscreen-status {
+  position: absolute;
+  top: calc(12.5% + 49px);
+  right: 12px;
+  max-width: min(23em, 75%);
+  margin: 6px 0;
+  padding: 9px 13px;
+  border: 1px solid #957248;
+  background: #211813;
+  font: 600 16px / 1.2 var(--serif);
 }
 
 #touch {
@@ -379,7 +452,7 @@ main {
 }
 .pref-presets {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 4px;
   padding: 4px;
   border: 1px solid #936b43;

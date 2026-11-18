@@ -8,7 +8,7 @@
     />
     <meta name="theme-color" content="#10191c" />
     <title>Veilbound · Echoes of the Hollow Crown</title>
-    <link rel="stylesheet" href="./menu.css?v=bellwarden" />
+    <link rel="stylesheet" href="./menu.css?v=ultra" />
   </head>
   <body>
     <main>
@@ -26,6 +26,16 @@
         aria-label="Settings"
         hidden
       ></button>
+      <button
+        id="fullscreen-button"
+        type="button"
+        title="Enter fullscreen"
+        aria-label="Enter fullscreen"
+        hidden
+      >
+        <span aria-hidden="true"></span>
+      </button>
+      <p id="fullscreen-status" role="status" hidden></p>
     </main>
     <div id="touch" aria-label="Touch controls" hidden>
       <section id="pad"></section>
@@ -125,9 +135,17 @@
                     >High</span
                   ></label
                 >
+                <label
+                  ><input type="radio" name="quality" value="ultra" /><span
+                    >Ultra 4K</span
+                  ></label
+                >
               </div>
               <p class="pref-detail" id="quality-description"></p>
             </fieldset>
+            <button type="button" class="pref-action" data-command="fullscreen">
+              Enter fullscreen
+            </button>
             <label class="pref-range"
               ><span>Brightness <output for="pref-brightness"></output></span>
               <input
@@ -228,8 +246,9 @@
       </footer>
     </dialog>
     <input hidden id="loadfile" type="file" accept=".json,application/json" />
-    <script src="./presentation.js?v=bellwarden"></script>
-    <script src="./ui.js?v=bellwarden"></script>
+    <script src="./presentation.js?v=ultra"></script>
+    <script src="./ui.js?v=ultra"></script>
+    <script src="./field-art.js?v=ultra"></script>
     <script>
       "use strict";
       const cv = document.querySelector("canvas"),
@@ -254,6 +273,9 @@
         "kit-surfaces": new Image(),
         "kit-fittings": new Image(),
         "kit-sign": new Image(),
+        "wallstone-a": new Image(),
+        "wallstone-b": new Image(),
+        "water-surfaces": new Image(),
       };
       const villageSprites = {
         arch: [
@@ -310,6 +332,8 @@
         ],
       };
       function loadPaintedArt() {
+        for (const name of Object.keys(fieldSheets))
+          paintedArt[name] = new Image();
         for (const [name, image] of Object.entries(paintedArt)) {
           image.onload = () => {
             roomCache = titleCache = null;
@@ -320,6 +344,9 @@
                 "village-ground",
                 "region-props",
                 "sanctum-props",
+                "entrances-early",
+                "field-flora",
+                "field-structures",
               ].includes(name)
             )
               vistaLayer = null;
@@ -337,7 +364,7 @@
           graphics.scale === 1 ? Math.round(y) : y,
         );
         g.scale(flip * scale, scale);
-        g.imageSmoothingQuality = "medium";
+        g.imageSmoothingQuality = graphics.scale === 10 ? "high" : "medium";
       }
       function villageSprite(name, x, y, world, scale = 1, flip = 1) {
         const image = paintedArt.village;
@@ -383,6 +410,7 @@
         classic: { name: "Classic", scale: 1, samples: 2, texture: 1 },
         balanced: { name: "Balanced", scale: 3, samples: 3, texture: 1 },
         high: { name: "High", scale: 5, samples: 5, texture: 2 },
+        ultra: { name: "Ultra 4K", scale: 10, samples: 7, texture: 3 },
       };
       let graphics = graphicsPresets.high;
       let g = cv.getContext("2d");
@@ -976,6 +1004,7 @@
         if (
           preferences.open ||
           ((e.target === hudSettings ||
+            e.target === fullscreenButton ||
             e.target?.closest?.("#touch-actions")) &&
             ["Enter", "Space"].includes(e.code))
         )
@@ -1437,6 +1466,16 @@
       }
       function caveArch(x, y) {
         groundShadow(x, y, 14, 4);
+        if (
+          fieldSprite(
+            S.world ? "entrances-late" : "entrances-early",
+            5,
+            x,
+            y,
+            34,
+          )
+        )
+          return;
         stamp("cave-mouth/" + S.world, x, y, 1, 1, () => {
           let m = new Miniature(),
             mat = S.world ? "obsidian" : "steel";
@@ -1499,14 +1538,15 @@
           let x = k ? 348 : 36,
             y = k ? 149 : 91;
           groundShadow(x, y, 10, 3);
-          stamp(
-            "side-alcove/" + props[k] + "/" + (d >= 4),
-            x,
-            y,
-            0.82,
-            k ? -1 : 1,
-            () => fieldDressing(props[k], d >= 4),
-          );
+          if (!furnishingSprite(props[k], x, y, 0.82, k ? -1 : 1))
+            stamp(
+              "side-alcove/" + props[k] + "/" + (d >= 4),
+              x,
+              y,
+              0.82,
+              k ? -1 : 1,
+              () => fieldDressing(props[k], d >= 4),
+            );
         }
       }
       function lampLight(x, y, r, color) {
@@ -1523,6 +1563,7 @@
           color = blue ? "#9ee8e3" : "#ffae68";
         floorLight(x, y + 9, 22, 11, color, 0.32);
         lampLight(x, y - 2, 19 + wave, color);
+        if (fieldSprite("finds", blue ? 11 : 10, x, y + 8, 14)) return;
         stamp(
           "brazier-stand",
           x,
@@ -1630,43 +1671,50 @@
         const angle = o.angle || 0,
           a = angle * Math.PI * 0.5 + 0.52,
           correct = x < 204 ? 1 : 3;
-        stamp(
-          "aligned-mirror/" + angle + "/" + !!o.on,
-          x,
-          y,
-          1,
-          1,
-          () => {
-            const m = new Miniature();
-            bevelBox(m, 0, 0, 0, 10.4, 1.35, 6.75, "limestone", 0.28);
-            m.lathe(
-              0,
-              0,
-              0,
-              [
-                [1.35, 3.25, 2.37],
-                [2.21, 2.5, 1.83],
-                [5.1, 1.63, 1.18],
-                [7.82, 2.56, 1.56],
-              ],
-              "bronze",
-              8,
-            );
-            const gloss = o.on ? "witchlight" : "glass";
-            m.orb(0, 9.05, 1.31, 4.22, 4.32, 0.89, gloss);
-            m.hoop(0, 9.17, 1.78, 4.32, 4.35, 0.48, "brass");
-            m.limb(
-              [-2.44, 7.93, 2.13],
-              [2.39, 11.13, 2.1],
-              0.27,
-              0.28,
-              "silver",
-              6,
-            );
-            renderMiniature(m, [-0.4, 1.07, -0.27, -1.05][angle % 4]);
-          },
-          true,
-        );
+        if (
+          !fieldSprite("interaction-props", 1, x, y, 16, angle > 1 ? -1 : 1, [
+            0,
+            [0.84, 1, 0.82, 1][angle % 4],
+            1,
+          ])
+        )
+          stamp(
+            "aligned-mirror/" + angle + "/" + !!o.on,
+            x,
+            y,
+            1,
+            1,
+            () => {
+              const m = new Miniature();
+              bevelBox(m, 0, 0, 0, 10.4, 1.35, 6.75, "limestone", 0.28);
+              m.lathe(
+                0,
+                0,
+                0,
+                [
+                  [1.35, 3.25, 2.37],
+                  [2.21, 2.5, 1.83],
+                  [5.1, 1.63, 1.18],
+                  [7.82, 2.56, 1.56],
+                ],
+                "bronze",
+                8,
+              );
+              const gloss = o.on ? "witchlight" : "glass";
+              m.orb(0, 9.05, 1.31, 4.22, 4.32, 0.89, gloss);
+              m.hoop(0, 9.17, 1.78, 4.32, 4.35, 0.48, "brass");
+              m.limb(
+                [-2.44, 7.93, 2.13],
+                [2.39, 11.13, 2.1],
+                0.27,
+                0.28,
+                "silver",
+                6,
+              );
+              renderMiniature(m, [-0.4, 1.07, -0.27, -1.05][angle % 4]);
+            },
+            true,
+          );
         const guide = correct * Math.PI * 0.5 + 0.52;
         line(
           x,
@@ -1683,6 +1731,11 @@
           o.on ? "#fff1b7" : "#a4e8e0",
         );
         if (o.on) floorLight(x, y, 9, 4, "#f9dba0", 0.58);
+      }
+      function giltPortrait(o) {
+        return !scene.obj.some(
+          (other) => other.type === "portrait" && other.x < o.x,
+        );
       }
       function movingSpark(x, y, r, color) {
         poly(
@@ -1870,7 +1923,7 @@
         g.beginPath();
         g.rect(x + 2, y + 2, 30, 37);
         g.clip();
-        if (paintedResident(id, x + 18, y + 61, 2.35)) {
+        if (id < 8 && paintedResident(id, x + 18, y + 61, 2.35)) {
           g.restore();
           return;
         }
@@ -2360,7 +2413,7 @@
           graphics.scale === 1 ? Math.round(x) : x,
           graphics.scale === 1 ? Math.round(y) : y,
         );
-        if (castShadow && graphics === graphicsPresets.high) {
+        if (castShadow && graphics.scale >= graphicsPresets.high.scale) {
           if (!entry.shadow) {
             // A half-sized, softly filtered silhouette is shared by every use of this pose.
             const shadow = document.createElement("canvas");
@@ -3750,7 +3803,7 @@
         if (id === 5) return villageSprite("courier", x, y, S.world, scale);
         if (id === 6 || id === 7)
           return villageSprite("guide", x, y, id - 6, scale, -1);
-        return false;
+        return fieldSprite("villagers", id, x, y, 25 * scale, id % 2 ? -1 : 1);
       }
       function resident(x, y, id, castShadow = false) {
         if (paintedResident(id, x, y)) return;
@@ -6558,10 +6611,25 @@
           }
           g.restore();
         } else if (hide) {
-          oval(m.x, m.y, 7, 3, "#766d5d");
-          for (let i = 0; i < 3; i++)
-            rect(m.x - 5 + i * 4, m.y - (i % 2) * 2, 2, 1, "#c5cdac");
-        } else if (!paintedGuardian(m, y, face, pose, phase)) {
+          if (!fieldSprite("interaction-props", 8, m.x, m.y + 2.4, 16, face)) {
+            oval(m.x, m.y, 7, 3, "#766d5d");
+            for (let i = 0; i < 3; i++)
+              rect(m.x - 5 + i * 4, m.y - (i % 2) * 2, 2, 1, "#c5cdac");
+          }
+        } else if (
+          !(m.big === 2
+            ? paintedGuardian(m, y, face, pose, phase)
+            : foeSprite(
+                m.big ? d : m.id,
+                !!m.big,
+                m.x,
+                y,
+                face,
+                pose,
+                m.age,
+                m.hurt,
+              ))
+        ) {
           stamp(
             [
               "enemy",
@@ -6621,7 +6689,9 @@
         cv.style.imageRendering = graphics.scale === 1 ? "pixelated" : "auto";
         g.setTransform(graphics.scale, 0, 0, graphics.scale, 0, 0);
         g.imageSmoothingEnabled = graphics.scale > 1;
+        g.imageSmoothingQuality = graphics.scale === 10 ? "high" : "medium";
         actorAtlas.clear();
+        atlasScratch.length = 0;
         titleCache = roomCache = null;
       }
       function makeLayer(draw, width = W, height = H) {
@@ -6633,6 +6703,7 @@
           g = layer.getContext("2d");
           g.scale(graphics.scale, graphics.scale);
           g.imageSmoothingEnabled = graphics.scale > 1;
+          g.imageSmoothingQuality = graphics.scale === 10 ? "high" : "medium";
           draw();
         } finally {
           g = target;
@@ -7352,9 +7423,10 @@
           )
             return;
         }
-        stamp("scene/" + kind + "/" + S.world, o.x, o.y, 1, 1, () =>
-          fieldDressing(kind, !!S.world),
-        );
+        if (!furnishingSprite(kind, o.x, o.y, 1, o.x > 192 ? -1 : 1))
+          stamp("scene/" + kind + "/" + S.world, o.x, o.y, 1, 1, () =>
+            fieldDressing(kind, !!S.world),
+          );
       }
       function mechanismModel(d, target, live, phase) {
         let m = new Miniature(),
@@ -7508,9 +7580,15 @@
           ),
           phase = scene.state % 4;
         groundShadow(o.x, o.y, 8, 2.9);
-        stamp(["mechanism", d, t, live, phase].join("/"), o.x, o.y, 1, 1, () =>
-          mechanismModel(d, t, live, phase),
-        );
+        if (!mechanismSprite(d, t, o.x, o.y, 18, live))
+          stamp(
+            ["mechanism", d, t, live, phase].join("/"),
+            o.x,
+            o.y,
+            1,
+            1,
+            () => mechanismModel(d, t, live, phase),
+          );
         if (live) spark(o.x + 3, o.y - 11, "#f8dea2", 1);
       }
 
@@ -7684,10 +7762,12 @@
       }
       function portalModel(x, y, d) {
         groundShadow(x, y, 23, 6.3, 3);
-        stamp("entrance/" + d, x, y, 1, 1, () => entranceSculpt(d), true);
+        if (!entranceSprite(d, x, y))
+          stamp("entrance/" + d, x, y, 1, 1, () => entranceSculpt(d), true);
         if (S.done.includes(d)) spark(x, y - 28, "#caeab4", 2);
       }
       function bridgeModel(x, y, w) {
+        if (fieldSprite("field-structures", w, x, y + 5, 62)) return;
         stamp("bridge/" + w, x, y, 1, 1, () => {
           let m = new Miniature(),
             mat = w ? "coal" : "bark";
@@ -7789,28 +7869,34 @@
         if (o.type === "gear") {
           const frozen = !!scene.frozen,
             phase = frozen || opts.reduced ? 0 : Math.floor(tick / 6) % 8;
-          for (let j = 0; j < 3; j++)
-            stamp(
-              "hazard-cog/" + phase + "/" + frozen,
-              x + w / 2,
-              y + 7 + j * 11,
-              1.12,
-              1,
-              () => {
-                const m = new Miniature();
-                gear(
-                  m,
-                  0,
-                  0,
-                  0,
-                  5.6,
-                  (phase * TAU) / 64,
-                  frozen ? "frost" : "brass",
-                );
-                m.hoop(0, 0, 1.49, 3.8, 3.6, 0.31, frozen ? "glass" : "bronze");
-                renderMiniature(m, 0);
-              },
-            );
+          for (let j = 0; j < 3; j++) {
+            const X = x + w / 2,
+              Y = y + 7 + j * 11;
+            if (artReady(paintedArt["interaction-props"])) {
+              g.save();
+              g.translate(X, Y);
+              g.scale(1, 0.77);
+              g.rotate((phase * TAU) / 64);
+              fieldSprite("interaction-props", 11, 0, 6, 12.6);
+              g.restore();
+              if (frozen) floorLight(X, Y, 9, 6, "#a2e6ef", 0.59);
+              continue;
+            }
+            stamp("hazard-cog/" + phase + "/" + frozen, X, Y, 1.12, 1, () => {
+              const m = new Miniature();
+              gear(
+                m,
+                0,
+                0,
+                0,
+                5.6,
+                (phase * TAU) / 64,
+                frozen ? "frost" : "brass",
+              );
+              m.hoop(0, 0, 1.49, 3.8, 3.6, 0.31, frozen ? "glass" : "bronze");
+              renderMiniature(m, 0);
+            });
+          }
         } else if (activeBridge) {
           const center = y + h * 0.5;
           if (path) {
@@ -7900,6 +7986,19 @@
           }
           g.restore();
         } else if (o.style === "icewall" && !o.melted) {
+          if (artReady(paintedArt["interaction-props"])) {
+            groundShadow(x + w / 2, y + h / 2, w * 0.94, h * 0.52);
+            for (let j = 0; j < Math.ceil(h / 5.8); j++)
+              fieldSprite(
+                "interaction-props",
+                10,
+                x + w / 2,
+                Math.min(y + h, y + 8 + j * 5.8),
+                Math.max(9, w * 1.23),
+                j % 2 ? -1 : 1,
+              );
+            return;
+          }
           rect(x, y, w, h, "#426c9a");
           for (let j = 0; j < Math.ceil(h / 7.5); j++) {
             const Y = y + j * 7.5;
@@ -7913,6 +8012,7 @@
             line(x + 1.17, Y + 5.1, x + w * 0.48, Y + 1.14, "#d2eee780");
           }
         } else if (o.style === "masonry") {
+          if (masonryBlock(o, theme)) return;
           rect(x, y - 4.7, w, h + 4.7, deep);
           for (let j = 0; j < Math.ceil(w / 12); j++)
             stoneCourse(
@@ -8842,14 +8942,7 @@
             toast(o.on ? "Mirror catches the golden line" : "The mirror turns");
             break;
           case "portrait":
-            if (
-              o.x ===
-              Math.min(
-                ...scene.obj
-                  .filter((q) => q.type === "portrait")
-                  .map((q) => q.x),
-              )
-            ) {
+            if (giltPortrait(o)) {
               scene.portrait = true;
               o.on = true;
               toast("The gilt portrait opens its eyes");
@@ -11681,37 +11774,66 @@
         let variant = (Math.floor(x / 9) + Math.floor(y / 13)) % 4,
           mill = kind === "mill";
         groundShadow(x, y, mill ? 16 : 22, mill ? 6 : 8, 3);
-        stamp(
-          "dwelling/" + variant + "/" + dark + "/" + mill,
-          x,
-          y,
-          1,
-          1,
-          () => roofModel(dark, variant, mill),
-          true,
-        );
+        const paintedMill =
+          mill &&
+          fieldSprite(
+            dark ? "villagers" : "field-structures",
+            dark ? 5 : 2,
+            x,
+            y,
+            57,
+          );
+        if (
+          !paintedMill &&
+          !(
+            !mill &&
+            villageSprite(
+              variant % 2 ? "amberHouse" : "tealHouse",
+              x,
+              y,
+              dark,
+              1.12,
+            )
+          )
+        )
+          stamp(
+            "dwelling/" + variant + "/" + dark + "/" + mill,
+            x,
+            y,
+            1,
+            1,
+            () => roofModel(dark, variant, mill),
+            true,
+          );
         if (mill) {
           let phase = opts.reduced ? 0 : Math.floor(tick / 4) % 48;
-          stamp("mill-sails/" + phase, x - 2, y - 21, 1, 1, () => {
-            for (let j = 0; j < 4; j++) {
-              g.save();
-              g.rotate((j / 4 + phase / 192) * TAU);
-              rect(-0.5, -21, 1.5, 21, "#604e43");
-              poly(
-                [
-                  [0, -21],
-                  [6, -22],
-                  [5, -8],
-                  [1, -6],
-                ],
-                dark ? "#8a7987" : "#d8c699",
-              );
-              for (let i = 0; i < 4; i++)
-                line(1, -20 + i * 3, 5, -21 + i * 3, "#978461");
-              g.restore();
-            }
-            joint(0, 0, 2.6, 2.6, brass);
-          });
+          stamp(
+            "mill-sails/" + phase + "/" + dark,
+            x - 2,
+            y - (paintedMill ? 30 : 21),
+            1,
+            1,
+            () => {
+              for (let j = 0; j < 4; j++) {
+                g.save();
+                g.rotate((j / 4 + phase / 192) * TAU);
+                rect(-0.5, -21, 1.5, 21, "#604e43");
+                poly(
+                  [
+                    [0, -21],
+                    [6, -22],
+                    [5, -8],
+                    [1, -6],
+                  ],
+                  dark ? "#8a7987" : "#d8c699",
+                );
+                for (let i = 0; i < 4; i++)
+                  line(1, -20 + i * 3, 5, -21 + i * 3, "#978461");
+                g.restore();
+              }
+              joint(0, 0, 2.6, 2.6, brass);
+            },
+          );
         }
       }
       function groundShadow(x, y, rx, ry, offset = 1) {
@@ -11945,6 +12067,18 @@
               ? Math.floor(tick / 27 + id) % 4
               : 0;
         groundShadow(x, y, 13 * size, 4 * size, 4);
+        if (
+          fieldSprite(
+            "field-flora",
+            dark ? 4 : fir ? 2 : 1,
+            x,
+            y,
+            (fir ? 45 : 39) * size,
+            id % 2 ? -1 : 1,
+            [phase === 0 ? 0 : Math.sin(phase * 1.57) * 0.016, 1, 1],
+          )
+        )
+          return;
         stamp(
           `woodland/${style}/${id}/${phase}`,
           x,
@@ -12053,6 +12187,17 @@
       function rock(x, y, s, dark) {
         let k = ((Math.round(x + y) % 7) + 7) % 7;
         groundShadow(x, y, 10 * s, 3 * s);
+        if (
+          fieldSprite(
+            "field-structures",
+            dark ? 7 : 6,
+            x,
+            y,
+            23 * s,
+            k % 2 ? -1 : 1,
+          )
+        )
+          return;
         stamp("boulder/" + k + "/" + dark, x, y, s, 1, () => {
           let m = new Miniature();
           m.lathe(
@@ -12751,90 +12896,6 @@
         }
         renderMiniature(m, -0.18);
       }
-      function dungeonDoor(e, d) {
-        const [x, y] = {
-            left: [8, 119],
-            right: [376, 119],
-            up: [192, 38],
-            down: [192, 204],
-          }[e.dir],
-          angle = {
-            up: 0,
-            right: Math.PI / 2,
-            down: Math.PI,
-            left: -Math.PI / 2,
-          }[e.dir],
-          [dark, stone, hi] = dungeonColors[d],
-          lockedDoor = !!locked(e.to);
-        g.save();
-        g.translate(x, y);
-        g.rotate(angle);
-        poly(
-          [
-            [-16, 11],
-            [-17, -4],
-            [-13, -10],
-            [0, -13],
-            [13, -10],
-            [17, -4],
-            [16, 11],
-          ],
-          dark,
-        );
-        poly(
-          [
-            [-12, 3],
-            [-12, -4],
-            [-7, -9],
-            [7, -9],
-            [12, -4],
-            [12, 3],
-          ],
-          "#111726",
-        );
-        for (let z = 0; z < 5; z++) {
-          const Y = z * 2.2 + 0.9,
-            span = 10.5 + z * 0.84;
-          poly(
-            [
-              [-span, Y],
-              [span, Y],
-              [span + 0.51, Y + 1.65],
-              [-span - 0.51, Y + 1.65],
-            ],
-            z % 2 ? stone : stone + "ce",
-          );
-          rect(
-            -span + 0.5,
-            Y,
-            2 * span - 1,
-            0.56,
-            hi + (z === 4 ? "a9" : "61"),
-          );
-        }
-        archLine(0, 8, 21, 15, stone, 3);
-        archLine(-0.78, 6.84, 20, 14.75, hi + "9a", 0.96);
-        for (const s of [-1, 1]) {
-          rect(s * 15.5 - 2.5, 3.4, 5.2, 6.65, stone);
-          rect(s * 15.5 - 2.1, 3.4, 4.41, 1.11, hi + "ba");
-          rect(s * 15.5 - 2.9, 9.2, 5.77, 1.4, dark);
-          petalGlyph(s * 16.1, -2.55, 1.85, lockedDoor ? "#b78a68" : "#e9d29a");
-        }
-        if (lockedDoor) {
-          for (let j = -2; j <= 2; j++) {
-            const X = j * 4.8;
-            rect(X - 1.07, -7.3, 2.13, 13.2, "#3c3140");
-            rect(X - 0.8, -7.1, 0.87, 13.05, "#c19169");
-            rect(X - 0.87, -5.55, 1.53, 1, "#edd6a4");
-          }
-          rect(-12, -2, 24, 2.9, "#634556");
-          rect(-12, -2, 24, 0.75, "#ad7d63");
-          oval(0, -0.48, 3.65, 4.13, "#4d3441");
-          oval(0, -0.95, 2.89, 3.48, "#e3a968");
-          rect(-0.46, -1.8, 0.94, 1.96, "#553143");
-        }
-        g.restore();
-      }
       const chamberLight = [
         "#b6c879",
         "#83e0d8",
@@ -13112,6 +13173,12 @@
         }
       }
       function chamberWalls(d, cave) {
+        if (chamberMasonry(d, cave)) {
+          if (!cave)
+            for (const [i, x] of [47, 139, 247, 337].entries())
+              if (!chamberWindow(x, d)) hangingLattice(x, 32, d, i);
+          return;
+        }
         const [deep, base, hi] = dungeonColors[d],
           seed = scene.seed,
           aux = cave ? ["#292539", "#554b57", "#a19489"] : dungeonColors[d],
@@ -13186,7 +13253,11 @@
         if (!paintChamberFloor(d, cave)) flagstones(d, cave);
         paintChamberInlays(d, cave, room);
         if (!cave) floorRelief(d, room);
+        g.save();
+        clipChamberWalls(scene.exits);
         chamberWalls(d, cave);
+        g.restore();
+        paintPassages(d, cave);
         for (const [x, y] of [
           [39, 91],
           [345, 91],
@@ -13218,7 +13289,8 @@
           for (const x of [26, 358])
             for (const y of [68, 188]) {
               groundShadow(x, y, 9.4, 4);
-              stamp("pillar/" + d, x, y, 1.15, 1, () => column(d), true);
+              if (!chamberColumn(x, y, d))
+                stamp("pillar/" + d, x, y, 1.15, 1, () => column(d), true);
             }
           dungeonSet(d);
         }
@@ -13278,8 +13350,8 @@
           );
         const ramp = colorRamp(
             dark
-              ? ["142943", "20465d", "2d8c91", "a7d6be"]
-              : ["1e4a71", "26698a", "36a4a1", "d0e4b6"],
+              ? ["101b3d", "243555", "397089", "aacdc7"]
+              : ["102d43", "224d62", "3a7777", "acccae"],
             49,
           ),
           silt = colorRamp(
@@ -13320,7 +13392,7 @@
                   fine * 0.05 +
                   Math.max(0, 1 - edge / 13) * 0.34 +
                   (ripple > 0.86 && edge > 1 && large > 0.43 ? 0.068 : 0);
-            if (z === 1 && edge === 0) shade = 0.84 + large * 0.09;
+            if (z === 1 && edge === 0) shade = 0.64 + large * 0.2;
             else if (z === 1 && edge === 1) shade -= 0.18;
             const color = (z === 1 ? ramp : silt)[
                 clamp(Math.round(shade * 48), 0, 48)
@@ -13339,13 +13411,30 @@
       }
       function drawWater() {
         if (!scene.water.length) return;
-        const key = scene.water.map((o) => o.style).join("/");
-        if (scene.riverArt?.key !== key)
-          scene.riverArt = { key, ...bakeWater() };
-        const { map, motion, waves } = scene.riverArt;
+        const sheet = paintedArt["water-surfaces"];
+        const key = [
+          graphics.scale,
+          artReady(sheet),
+          ...scene.water.map((o) => o.style),
+        ].join("/");
+        if (scene.riverArt?.key !== key) {
+          const water = bakeWater();
+          if (artReady(sheet)) {
+            const tile =
+              S.world + (scene.water.every((o) => o.style === "dry") ? 2 : 0);
+            water.layer = makeLayer(() => {
+              g.drawImage(water.map, 0, 0, W, H);
+              g.globalCompositeOperation = "source-atop";
+              g.globalAlpha = 0.78;
+              materialFill(sheet, 2, tile, 512, 85, 64, 17, 13);
+            });
+          }
+          scene.riverArt = { key, ...water };
+        }
+        const { map, layer, motion, waves } = scene.riverArt;
         g.save();
-        g.imageSmoothingEnabled = false;
-        g.drawImage(map, 0, 0);
+        g.imageSmoothingEnabled = graphics.scale > 1;
+        g.drawImage(layer || map, 0, 0, W, H);
         if (opts.reduced || !opts.atmosphere) {
           g.restore();
           return;
@@ -13358,13 +13447,13 @@
           g.globalAlpha = 0.2 + shimmer * 0.45;
           const X = x + Math.sin(a * 0.71) * 1.4,
             Y = y + Math.cos(a * 0.63) * 0.61;
-          rect(
-            X,
-            Y,
-            Math.min(8, length * (0.5 + shimmer * 0.5)),
-            bank ? 0.59 : 0.46,
-            bank ? "#e5f4d1" : "#b7eddb",
-          );
+          const span = Math.min(8, length * (0.5 + shimmer * 0.5));
+          g.beginPath();
+          g.moveTo(X, Y);
+          g.quadraticCurveTo(X + span * 0.48, Y - 0.62, X + span, Y + 0.16);
+          g.strokeStyle = bank ? "#e5f4d1" : "#b7eddb";
+          g.lineWidth = bank ? 0.55 : 0.37;
+          g.stroke();
           if (shimmer > 0.85) rect(X + 0.8, Y - 0.52, 1.33, 0.51, "#e2ffed");
         }
         g.restore();
@@ -13374,6 +13463,7 @@
           stone = w ? "#676173" : "#8c927b",
           post = w ? "#4b424c" : "#796447";
         function fence(x, y, length) {
+          if (villageSprite("fence", x + length / 2, y, w, length / 38)) return;
           rect(x, y - 6, length, 2, post);
           rect(x, y - 2, length, 1, post);
           for (let j = 0; j <= length; j += 12) {
@@ -13382,6 +13472,10 @@
           }
         }
         function reeds(x, y) {
+          if (
+            fieldSprite("field-structures", 5, x + 3, y + 1, 15, x % 2 ? -1 : 1)
+          )
+            return;
           for (let i = 0; i < 5; i++) {
             let X = x + i * 2;
             line(X, y - 1, X - 2, y - 5 - (i % 3), moss);
@@ -13543,6 +13637,7 @@
             scenicArt({ ...o, kind: "stall" });
             break;
           case "memorial":
+            if (furnishingSprite("memorialStone", x + 4, y + 1, 0.8)) break;
             for (let j = 0; j < 7; j++) {
               let X = x + (j % 4) * 3,
                 Y = y + (j % 3) * 2;
@@ -13551,34 +13646,33 @@
             }
             break;
           case "oldtree":
-            tree(x, y, w, 330, 1.22);
-            rect(x - 3, y - 6, 6, 8, "#293a35");
-            if (walkableTree())
+            if (!fieldSprite("field-flora", w ? 3 : 0, x, y + 3, 54)) {
+              tree(x, y, w, 330, 1.22);
+              rect(x - 3, y - 6, 6, 8, "#293a35");
+            }
+            if (
+              walkableTree() &&
+              !fieldSprite("field-structures", 8, x, y + 1, 15)
+            )
               for (let j = 0; j < 3; j++)
                 rect(x - 3, y - j * 3, 6, 1, "#bca879");
             break;
           case "mirror":
             paintMirror(x, y, o);
             break;
-          case "portrait":
-            rect(
-              x - 6,
-              y - 15,
-              13,
-              16,
-              x ===
-                Math.min(
-                  ...scene.obj
-                    .filter((q) => q.type === "portrait")
-                    .map((q) => q.x),
-                )
-                ? "#cfa76e"
-                : "#948283",
-            );
-            rect(x - 5, y - 14, 11, 14, "#534251");
-            oval(x, y - 9, 3, 3, o.on ? "#e4cda7" : "#b59792");
-            rect(x - 3, y - 5, 7, 4, "#856a7f");
+          case "portrait": {
+            const gilt = giltPortrait(o);
+            if (o.on) floorLight(x, y - 7, 12, 12, "#edca91", 0.45);
+            if (gilt && fieldSprite("interaction-props", 0, x, y + 1, 19))
+              break;
+            groundShadow(x, y + 1, 6.7, 2.2);
+            oval(x, y - 8.2, 6.25, 8.4, "#373444");
+            ovalLine(x, y - 8.2, 5.6, 7.8, gilt ? "#e1bc79" : "#ada2aa", 1.4);
+            ovalLine(x, y - 8.2, 4.5, 6.63, "#1d1d28", 0.6);
+            if (gilt) oval(x, y - 9.4, 2.7, 3.3, "#cdb5a2");
+            rect(x - 5.5, y + 0.2, 11, 1.1, "#6c626e");
             break;
+          }
           case "house":
             if (inVillage() && artReady(paintedArt.village)) {
               const scale = y > 140 ? 1.15 : 0.96;
@@ -13600,7 +13694,7 @@
             portalModel(x, y, o.id);
             break;
           case "cave":
-            if (S.d < 0 && !S.cave && villageSprite("cave", x, y, w)) break;
+            if (inVillage() && villageSprite("cave", x, y, w)) break;
             caveArch(x, y);
             break;
           case "bell":
@@ -13652,6 +13746,16 @@
               ? ["#394c69", "#527c7b", "#a5c5a7"]
               : ["#25494a", "#52804c", "#abd369"];
             groundShadow(x, y, 5.9, 2.1);
+            if (
+              w
+                ? villageSprite("flowers", x, y, w, 0.29)
+                : fieldSprite("field-flora", 5, x, y, 13, x % 2 ? -1 : 1, [
+                    flick * 0.052,
+                    1,
+                    1,
+                  ])
+            )
+              break;
             for (let j = -1; j <= 1; j++)
               succulent(
                 x + j * 2.81,
@@ -13664,6 +13768,7 @@
           }
           case "token":
             if (S.quests[o.id] !== 1) break;
+            if (fieldSprite("finds", o.id, x, y + 1, 10)) break;
             rect(x - 3, y - 5, 7, 6, "#dbba66");
             rect(x, y - 5, 1, 6, "#fff0a2");
             break;
@@ -13680,9 +13785,14 @@
               line(x - 1, y - 9, x + 2, y - 6, "#f2d9a5");
               line(x + 2, y - 5, x, y - 2, "#f2d9a5");
             } else if (o.kind === 2) {
+              if (fieldSprite("interaction-props", 5, x, y, 12)) break;
               rect(x - 4, y - 8, 9, 9, "#77877b");
               glyph(x, y - 4, 3, 0.44);
             } else {
+              if (fieldSprite("interaction-props", 6, x, y, 13)) {
+                spark(x, y - 6, "#e8ca77", 1);
+                break;
+              }
               rect(x - 5, y - 5, 10, 6, "#927b4e");
               rect(x - 4, y - 6, 8, 2, "#bcb573");
               spark(x, y - 5, "#e8ca77", 1);
@@ -13692,7 +13802,8 @@
             apparatus({ x, y, type: "machine" }, d);
             break;
           case "relay":
-            rect(x - 7, y - 7, 14, 8, "#605759");
+            if (!fieldSprite("interaction-props", 2, x, y + 1, 16))
+              rect(x - 7, y - 7, 14, 8, "#605759");
             glyph(x, y - 9, o.tool, 0.8);
             if (o.on) spark(x + 7, y - 13, "#f5df93", 2);
             break;
@@ -13703,6 +13814,16 @@
             break;
           case "song":
           case "node": {
+            if (
+              o.type === "song" &&
+              fieldSprite("interaction-props", 3, x, y, 19)
+            ) {
+              txt(String(o.id + 1), x, y + 8, "#f5dfab", 7, "center");
+              if (lit) spark(x + 4, y - 13, "#f8dea2", 1);
+              break;
+            }
+            if (o.type === "node" && mechanismSprite(8, false, x, y, 18, lit))
+              break;
             let col = lit ? "#cbf0a7" : c;
             oval(x, y, 10, 3, "#141f2855");
             rect(x - 7, y - 4, 15, 5, "#766f61");
@@ -13739,7 +13860,16 @@
             break;
           }
           case "float":
-            rect(x - 6, y + scene.shift * 5, 13, 4, "#b49268");
+            if (
+              !fieldSprite(
+                "interaction-props",
+                4,
+                x,
+                y + scene.shift * 5 + 4,
+                18,
+              )
+            )
+              rect(x - 6, y + scene.shift * 5, 13, 4, "#b49268");
             break;
           case "pot":
           case "chest":
@@ -13756,13 +13886,32 @@
                 ? !!o.opened
                 : o.type === "lever" &&
                   (d < 0 ? S.flags.bridge : flag(S.r === 9 ? "stair" : "hall"));
-            stamp("prop/" + o.type + "/" + Number(active), x, y, 1, 1, () =>
-              propModel(o.type, active),
-            );
+            if (!puzzleProp(o, active))
+              stamp("prop/" + o.type + "/" + Number(active), x, y, 1, 1, () =>
+                propModel(o.type, active),
+              );
             if (o.type === "well") spark(x + 2, y - 4, "#d9f3d8", 1);
+            if (
+              o.type === "chest" &&
+              !active &&
+              (o.reward === "key" || o.reward === "great")
+            )
+              fieldSprite(
+                "finds",
+                o.reward === "great" ? 9 : 8,
+                x,
+                y - 4.2,
+                5.1,
+                1,
+                [Math.PI * 0.5, 1, 1],
+              );
             break;
           }
           case "return":
+            if (fieldSprite("interaction-props", 7, x, y + 5, 24)) {
+              floorLight(x, y, 14, 8, "#b7eee1", 0.56);
+              break;
+            }
             oval(x, y, 11, 4, "#c4ba76");
             oval(x, y - 1, 8, 2, "#f4e1a3");
             break;
@@ -13775,10 +13924,7 @@
         let d = S.d,
           w = S.world;
         const paintedVillage = inVillage() && artReady(paintedArt.village);
-        if (d >= 0 || S.cave) {
-          for (const exit of scene.exits)
-            dungeonDoor(exit, d >= 0 ? d : S.area % 10);
-        }
+        if (d >= 0) for (const exit of scene.exits) passageGate(exit, d);
         drawWater();
         scene.traps.forEach((o) => {
           if (o.cast) {
@@ -13786,7 +13932,15 @@
               for (let j = 0; j < 4; j++)
                 rect(o.x + j * 5, o.y + o.h, 3, 1, "#e8bc83");
               line(o.x, o.y, o.x + o.w, o.y, "#e8bc83");
-            } else {
+            } else if (
+              !fieldSprite(
+                "interaction-props",
+                o.type === "ice" ? 10 : 9,
+                o.x + o.w * 0.5,
+                o.y + Math.min(o.h, 13),
+                Math.min(o.w, 21),
+              )
+            ) {
               for (let j = 0; j < 3; j++)
                 horn(
                   o.x + 3 + j * 5,
@@ -13810,6 +13964,7 @@
                 "house",
                 "oldtree",
                 "entrance",
+                "cave",
                 "rock",
                 "scenery",
                 "shop",
@@ -13850,7 +14005,15 @@
         drawables.sort((a, b) => a[0] - b[0]);
         for (let [, draw] of drawables) draw();
         for (let o of scene.drops) {
-          if (o.kind === "heart") heart(o.x - 3, o.y - 5, "#dc795c");
+          const y =
+            o.y - (opts.reduced ? 2 : 2 + Math.sin((tick + o.x) * 0.11) * 1.15);
+          if (o.kind === "ammo" && instrumentArt(10, o.x, y - 3, 9)) continue;
+          if (
+            o.kind !== "ammo" &&
+            fieldSprite("finds", o.kind === "heart" ? 7 : 6, o.x, y, 8.5)
+          )
+            continue;
+          if (o.kind === "heart") heart(o.x - 3, y - 5, "#dc795c");
           else spark(o.x, o.y - 4, "#edcb7c", 2);
         }
         for (let q of scene.shots) projectileArt(q);
@@ -14273,6 +14436,10 @@
         hot = [];
         if (hudSettings.hidden !== (mode !== "play"))
           hudSettings.hidden = mode !== "play";
+        const showFullscreen =
+          canFullscreen && (mode === "title" || mode === "play");
+        if (fullscreenButton.hidden === showFullscreen)
+          fullscreenButton.hidden = !showFullscreen;
         if (mode === "menu" && menu === "settings") {
           if (redrawBehindSettings) {
             if (menuFrom === "title") title();
@@ -14356,7 +14523,8 @@
         }
         floorLight(128, 119, 85, 60, "#ffe19f", 0.23);
         groundShadow(125, 118, 29, 5.3);
-        stamp("preferences/gate", 125, 118, 2.01, 1, () => entranceSculpt(0));
+        if (!entranceSprite(0, 125, 118, 91))
+          stamp("preferences/gate", 125, 118, 2.01, 1, () => entranceSculpt(0));
         for (const [x, y, size, flip] of [
           [71, 132, 43, -1],
           [190, 141, 48, 1],
@@ -14416,7 +14584,53 @@
         }
       }
       const preferences = document.getElementById("preferences"),
-        hudSettings = document.getElementById("hud-settings");
+        hudSettings = document.getElementById("hud-settings"),
+        fullscreenButton = document.getElementById("fullscreen-button"),
+        fullscreenStatus = document.getElementById("fullscreen-status"),
+        fullscreenSetting = preferences.querySelector(
+          "[data-command=fullscreen]",
+        ),
+        fullscreenRoot = document.documentElement,
+        requestFullscreen =
+          fullscreenRoot.requestFullscreen ||
+          fullscreenRoot.webkitRequestFullscreen,
+        exitFullscreen =
+          document.exitFullscreen || document.webkitExitFullscreen,
+        canFullscreen = !!(
+          requestFullscreen &&
+          exitFullscreen &&
+          (document.fullscreenEnabled ?? document.webkitFullscreenEnabled)
+        );
+      const isFullscreen = () =>
+        !!(document.fullscreenElement || document.webkitFullscreenElement);
+      function syncFullscreen() {
+        const active = isFullscreen();
+        const label = active ? "Exit fullscreen" : "Enter fullscreen";
+        fullscreenButton.setAttribute("aria-label", label);
+        fullscreenButton.title = label;
+        fullscreenButton.classList.toggle("is-fullscreen", active);
+        fullscreenSetting.textContent = label;
+        fullscreenStatus.hidden = true;
+      }
+      async function toggleFullscreen() {
+        try {
+          if (isFullscreen()) await exitFullscreen.call(document);
+          else await requestFullscreen.call(fullscreenRoot);
+          syncFullscreen();
+        } catch {
+          const message = "Fullscreen is unavailable in this browser window.";
+          if (preferences.open)
+            document.getElementById("pref-save").textContent = message;
+          else {
+            fullscreenStatus.textContent = message;
+            fullscreenStatus.hidden = false;
+          }
+        }
+      }
+      fullscreenSetting.hidden = !canFullscreen;
+      fullscreenButton.addEventListener("click", toggleFullscreen);
+      document.addEventListener("fullscreenchange", syncFullscreen);
+      document.addEventListener("webkitfullscreenchange", syncFullscreen);
       hudSettings.onclick = () => {
         if (mode === "play") openMenu("settings");
       };
@@ -14448,6 +14662,7 @@
           classic: "Original pixel art",
           balanced: "Smooth edges and shaded models",
           high: "Fine terrain and full-detail models",
+          ultra: "4K rendering for large displays",
         };
         document.getElementById("quality-description").textContent =
           W * graphics.scale +
@@ -14525,6 +14740,9 @@
           return;
         }
         switch (el.dataset.command) {
+          case "fullscreen":
+            toggleFullscreen();
+            break;
           case "back":
             closeMenu();
             break;

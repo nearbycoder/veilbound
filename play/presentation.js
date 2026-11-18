@@ -383,12 +383,23 @@ function chamberInlay(x, y, width, height, points, deep, color) {
   }
   const w = width / 2,
     h = height / 2;
-  poly(border(w + 2, h + 1.2), deep + "91");
-  poly(border(w, h), color + "36");
-  poly(border(w - 1.4, h - 1.3), deep + "4e");
-  const inset = border(w - 3.8, h - 3.2);
+  const outline = new Path2D(),
+    pointsOnEdge = border(w, h);
+  outline.moveTo(...pointsOnEdge[0]);
+  for (const start of pointsOnEdge.slice(1)) outline.lineTo(...start);
+  outline.closePath();
+  g.save();
+  g.lineJoin = "round";
+  g.lineWidth = 3.1;
+  g.strokeStyle = deep + "a3";
+  g.stroke(outline);
+  g.lineWidth = 1.3;
+  g.strokeStyle = color + "a5";
+  g.stroke(outline);
+  g.restore();
+  const inset = border(w - 3.1, h - 2.7);
   for (const [i, start] of inset.entries())
-    line(...start, ...inset[(i + 1) % inset.length], color + "46");
+    line(...start, ...inset[(i + 1) % inset.length], color + "60");
   for (const [X, Y] of [
     [x, y - h],
     [x + w, y],
